@@ -912,7 +912,7 @@ function clearDB(){if(!db)return;db.transaction(STORE_NAME,'readwrite').objectSt
 /* =========================================
    MENU MIX FROM SUPABASE STORAGE
    ========================================= */
-const DEFAULT_SOURCE='https://nilxeuaurdxcsdplufgo.supabase.co/storage/v1/object/public/Menu%20Mix/Menu%20Mix.xlsx';
+const DEFAULT_SOURCE=''; // v8.4: the old public file link was removed (that bucket is closed); Menu Mix reads from the database after sign-in
 // accepts a public object URL, or the Supabase dashboard link of a file (…/storage/files/buckets/<bucket>?preview=<file>)
 function normalizeSource(s){
   s=String(s||'').trim();if(!s)return '';
