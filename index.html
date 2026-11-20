@@ -1,0 +1,2832 @@
+<!DOCTYPE html>
+<html lang="en"><head><meta charset="UTF-8"><meta name="viewport" content="width=device-width,initial-scale=1"><title>ViewX | Menu Mix Intelligence</title>
+<link rel="preconnect" href="https://cdn.jsdelivr.net" crossorigin>
+<script defer src="https://cdn.jsdelivr.net/npm/xlsx@0.18.5/dist/xlsx.full.min.js"></script>
+<script defer src="https://cdn.jsdelivr.net/npm/chart.js@4.4.4/dist/chart.umd.min.js"></script>
+<script defer src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2.45.4/dist/umd/supabase.min.js"></script>
+<script defer src="https://cdn.jsdelivr.net/npm/chartjs-plugin-datalabels@2.2.0/dist/chartjs-plugin-datalabels.min.js"></script>
+<style>
+:root{--navy:#14243b;--blue:#3267e9;--teal:#17a88b;--bg:#f4f7fb;--ink:#17243a;--muted:#718096;--line:#e5ebf3;--shadow:0 8px 24px rgba(20,36,59,.06)}
+*{box-sizing:border-box}
+body{margin:0;background:var(--bg);font-family:Inter,Segoe UI,Arial,sans-serif;color:var(--ink)}
+.app{min-height:100vh}
+
+/* TOP NAVIGATION */
+.topnav{position:sticky;top:0;z-index:100;display:flex;align-items:center;gap:22px;padding:10px 28px;background:rgba(255,255,255,.86);backdrop-filter:saturate(180%) blur(14px);-webkit-backdrop-filter:saturate(180%) blur(14px);border-bottom:1px solid var(--line);box-shadow:0 4px 20px rgba(20,36,59,.06)}
+.brand{display:flex;align-items:center;gap:10px;flex-shrink:0}
+.logo{width:36px;height:36px;border-radius:11px;background:linear-gradient(135deg,#3c7cff,#20c5a2);display:grid;place-items:center;font-weight:900;font-size:18px;color:#fff;box-shadow:0 6px 14px rgba(50,103,233,.3)}
+.brand h2{font-size:17px;margin:0;letter-spacing:-.2px}
+.brand small{display:block;color:var(--muted);font-size:8px;margin-top:2px;letter-spacing:1.4px}
+.topnav nav{display:flex;align-items:center;gap:4px;min-width:0;overflow-x:auto;scrollbar-width:none;padding:4px;background:#eef2f8;border-radius:999px}
+.topnav nav::-webkit-scrollbar{display:none}
+.navitem{border:0;background:transparent;padding:9px 15px;border-radius:999px;color:#52637a;font-size:12px;font-weight:600;display:flex;gap:7px;align-items:center;cursor:pointer;white-space:nowrap;flex-shrink:0;transition:background .2s,color .2s,box-shadow .2s}
+.navitem:hover{background:#fff;color:var(--ink)}
+.navitem.active{background:linear-gradient(135deg,#3267e9,#2aa9c9);color:#fff;font-weight:700;box-shadow:0 6px 16px rgba(50,103,233,.35)}
+.navitem span{font-size:13px;opacity:.9}
+.mgap{margin-bottom:16px}
+.mlabel{font-size:11px;font-weight:700;color:var(--muted);text-align:center;margin-bottom:6px}
+.kpi .value.mval{font-size:18px}
+
+/* MAIN AREA STYLES */
+.main{min-width:0;flex:1;padding:26px 28px 40px;transition:width 0.3s ease}
+.topbar{display:flex;justify-content:space-between;align-items:center;gap:15px;margin-bottom:22px}
+.topbar-left{display:flex;align-items:center;gap:15px}
+.eyebrow{font-size:10px;color:var(--blue);font-weight:800;letter-spacing:1.5px;text-transform:uppercase}
+.topbar h1{font-size:26px;margin:6px 0 4px}
+.subtitle{font-size:12px;color:var(--muted)}
+.status{font-size:11px;color:#52637a;background:#fff;border:1px solid var(--line);padding:10px 12px;border-radius:11px}
+
+/* UPLOAD STYLES */
+.upload-grid{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:13px;margin-bottom:16px}
+.upload-card,.panel,.table-panel,.kpi{background:#fff;border:1px solid var(--line);border-radius:14px;box-shadow:var(--shadow);min-width:0}
+.upload-card{padding:15px}
+.upload-head{display:flex;align-items:center;gap:10px;margin-bottom:10px}
+.upload-icon{width:36px;height:36px;display:grid;place-items:center;border-radius:10px;background:#edf3ff;color:var(--blue);font-size:18px}
+.upload-card h3{margin:0;font-size:13px}
+.upload-card p{margin:4px 0 0;font-size:10px;color:var(--muted)}
+.dropzone{border:1px dashed #c9d5e5;border-radius:10px;padding:10px;background:#fafcff}
+.dropzone input{width:100%;font-size:11px}
+.filename{font-size:10px;color:var(--teal);margin-top:7px;overflow-wrap:anywhere}
+.joinnote{font-size:10px;color:var(--muted);margin:10px 1px 0;line-height:1.5}
+.toolbar{display:flex;align-items:center;gap:9px;flex-wrap:wrap;margin-bottom:16px}
+.btn{border:0;border-radius:9px;padding:10px 14px;font-size:11px;font-weight:800;cursor:pointer}
+.btn.primary{background:var(--blue);color:white}
+.btn.secondary{background:#fff;border:1px solid var(--line);color:#43546c}
+.btn:disabled{opacity:.45;cursor:not-allowed}
+.message{font-size:11px;color:var(--muted);flex:1;min-width:170px;line-height:1.5}
+.warning{color:#c14444}
+
+/* TOGGLE BUTTON STYLES */
+.metric-toggle{display:flex;background:#fff;border:1px solid var(--line);border-radius:9px;overflow:hidden;margin-left:auto}
+.metric-toggle button{border:0;background:transparent;padding:8px 16px;font-size:11px;font-weight:700;color:var(--muted);cursor:pointer;transition:all 0.2s}
+.metric-toggle button.active{background:var(--blue);color:#fff}
+.metric-toggle button:not(.active):hover{background:#f0f4f9;color:var(--ink)}
+
+/* FILTER & CUSTOM DROPDOWN STYLES */
+.filters{display:flex;flex-wrap:wrap;gap:9px;padding:12px;background:#fff;border:1px solid var(--line);border-radius:14px;box-shadow:var(--shadow);margin-bottom:16px;position:relative;z-index:10}
+.filter{min-width:130px;flex:1;position:relative}
+.filter label{display:block;font-size:9px;color:#78879a;font-weight:800;text-transform:uppercase;letter-spacing:.6px;margin-bottom:5px}
+.filter.day{min-width:90px;flex:0.5}
+.pw-overlay{position:fixed;inset:0;z-index:2000;background:rgba(20,36,59,.55);display:grid;place-items:center;padding:16px}
+.pw-box{background:#fff;border-radius:14px;padding:22px;width:100%;max-width:360px;box-shadow:0 20px 50px rgba(20,36,59,.3)}
+.pw-box h3{margin:0 0 8px;font-size:15px}
+.pw-box input{width:100%;border:1px solid var(--line);border-radius:8px;padding:10px;font-size:13px}
+.pw-box input:focus{outline:none;border-color:var(--blue)}
+.pw-err{color:#c14444;font-size:11px;min-height:15px;margin-top:6px}
+.login-overlay{z-index:3000;background:var(--bg)}
+.userbox{display:flex;align-items:center;gap:8px;margin-left:auto;flex-shrink:0}
+.userbox .who{display:flex;flex-direction:column;text-align:right;line-height:1.3;max-width:220px}
+.userbox .who b{font-size:12px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.userbox .who small{font-size:10px;color:var(--muted);white-space:nowrap}
+@media(max-width:1280px){.userbox #pwChangeBtn{display:none}}
+.top-actions{display:flex;gap:8px;align-items:center;flex-wrap:wrap;justify-content:flex-end}
+.cmp-overlay{position:fixed;inset:0;z-index:1000;background:var(--bg);overflow:auto}
+.cmp-body{padding:24px 28px 40px;min-height:100%;background:var(--bg)}
+.cmp-head{display:flex;justify-content:space-between;align-items:flex-start;gap:15px;margin-bottom:18px;flex-wrap:wrap}
+.cmp-head h2{font-size:24px;margin:6px 0 4px}
+.filter input[type="number"],.filter input[type="date"],.filter input[type="text"],.filter select{width:100%;border:1px solid var(--line);border-radius:8px;padding:8px;background:white;color:var(--ink);font-size:11px;height:35px}
+.ms-container{position:relative;width:100%}
+.ms-btn{width:100%;border:1px solid var(--line);border-radius:8px;padding:0 8px;background:white;color:var(--ink);font-size:11px;height:35px;text-align:left;cursor:pointer;display:flex;justify-content:space-between;align-items:center;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;transition:border-color .2s}
+.ms-btn:focus,.ms-btn.open{border-color:var(--blue);outline:none}
+.ms-btn-text{overflow:hidden;text-overflow:ellipsis;width:90%;pointer-events:none}
+.ms-btn::after{content:"▼";font-size:8px;color:var(--muted);pointer-events:none}
+.ms-dropdown{position:absolute;top:100%;left:0;right:0;background:white;border:1px solid var(--line);border-radius:8px;box-shadow:0 4px 12px rgba(20,36,59,.15);z-index:50;margin-top:4px;display:none;flex-direction:column;min-width:200px}
+.ms-dropdown.open{display:flex}
+.ms-search{padding:8px;border-bottom:1px solid var(--line)}
+.ms-search input{width:100%;padding:6px 8px;border:1px solid var(--line);border-radius:6px;font-size:11px;height:auto}
+.ms-actions{display:flex;justify-content:space-between;padding:6px 10px;border-bottom:1px solid var(--line);background:#f8fafc;font-size:10px}
+.ms-actions button{background:none;border:0;color:var(--blue);font-weight:700;cursor:pointer;padding:0}
+.ms-actions button:hover{text-decoration:underline}
+.ms-list{max-height:220px;overflow-y:auto;padding:4px 0}
+.ms-item{display:flex;align-items:center;gap:8px;padding:7px 10px;font-size:11px;cursor:pointer;user-select:none}
+.ms-item:hover{background:#f0f4f9}
+.ms-item input[type="checkbox"]{margin:0;cursor:pointer;accent-color:var(--blue);width:14px;height:14px}
+.ms-item span{white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.ms-empty{padding:12px;text-align:center;font-size:11px;color:var(--muted)}
+
+/* MISC STYLES */
+.kpis{display:grid;grid-template-columns:repeat(4,minmax(0,1fr));gap:12px;margin-bottom:16px}
+.kpi{padding:15px}
+.kpi .label{font-size:10px;color:var(--muted);font-weight:700}
+.kpi .value{font-size:23px;font-weight:800;margin:9px 0 4px;letter-spacing:-.5px;overflow-wrap:anywhere}
+.kpi .hint{font-size:9px;color:#8a97a9}
+.section-title{font-size:15px;margin:0 0 12px}
+.charts{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:16px;margin-bottom:16px}
+.panel,.table-panel{padding:16px;margin-bottom:0px}
+.panel-head{display:flex;justify-content:space-between;align-items:center;gap:8px;margin-bottom:12px}
+.panel-head h3{font-size:12px;margin:0}
+.panel-head span{font-size:9px;color:var(--muted)}
+.chartbox{height:260px;position:relative}
+.table-wrap{overflow:auto;max-height:430px}
+table{border-collapse:collapse;width:100%;font-size:10px;white-space:nowrap}
+th{position:sticky;top:0;background:#f7f9fc;color:#68788d;text-align:left;font-size:9px;text-transform:uppercase;letter-spacing:.4px;z-index:1;cursor:pointer;user-select:none;transition:background 0.2s}
+th:hover{background:#edf1f6;color:var(--ink)}
+td,th{padding:9px 8px;border-bottom:1px solid #edf1f6}
+td.num,th.num{text-align:right}
+tbody tr:hover{background:#f8fbff}
+.empty{padding:25px;text-align:center;color:#7d8ba0}
+.hidden{display:none!important}
+.pill{padding:3px 7px;border-radius:20px;background:#e8f8f3;color:#11866d;font-size:9px;font-weight:700}
+.footer{font-size:10px;color:#8a97a9;text-align:center;margin-top:18px}
+.view{display:none}
+.view.active{display:block}
+.split{display:grid;grid-template-columns:minmax(0,1fr) minmax(0,1fr);gap:14px}
+/* cards and their parts never grow wider than the screen; wide tables scroll sideways inside their card */
+.chart-with-table>*,.split>*,.panel,.table-panel,#mSections,#drillSections{min-width:0;max-width:100%}
+.cmp-body{overflow-x:hidden}
+/* a table that does not fit beside its chart goes below it, full width */
+.chart-with-table.stacked{grid-template-columns:minmax(0,1fr)!important}
+.chart-with-table.stacked .table-col{height:auto!important}
+/* table tools: sort arrows, Columns button and menu */
+th .ts-ico{display:inline-block;margin-left:4px;font-size:9px;color:#3267e9;min-width:6px}
+th.ts-on{color:#3267e9!important;background:#eef4ff!important}
+.tbl-tools{display:flex;justify-content:flex-end;position:relative;margin:0 0 6px}
+.tbl-colbtn{border:1px solid var(--line);background:#fff;color:#52637a;font:600 11px/1 inherit;padding:5px 10px;border-radius:8px;cursor:pointer}
+.tbl-colbtn:hover{border-color:#3267e9;color:#3267e9}
+.tbl-colmenu{position:absolute;right:0;top:calc(100% + 4px);z-index:60;background:#fff;border:1px solid var(--line);border-radius:10px;box-shadow:0 12px 30px rgba(20,36,59,.16);padding:8px;min-width:220px;max-height:320px;overflow:auto}
+.tbl-colmenu.hidden{display:none}
+.tbl-colmenu label{display:flex;align-items:center;gap:8px;padding:5px 6px;border-radius:6px;font-size:12px;color:#2a3950;cursor:pointer;white-space:nowrap}
+.tbl-colmenu label:hover{background:#f1f6ff}
+.tbl-colmenu input:disabled+span{color:#8a97a9}
+.tbl-colacts{border-top:1px solid var(--line);margin-top:6px;padding-top:6px;text-align:right}
+.tbl-colacts button{border:0;background:none;color:#3267e9;font-weight:700;font-size:12px;cursor:pointer}
+.chart-with-table.stacked .chart-col{height:auto!important}
+.chart-with-table.stacked .chart-col .chartbox{flex:none!important;height:var(--h,350px)!important}
+.chart-with-table.stacked .table-col .table-wrap{flex:none!important;max-height:430px!important}
+.compare-controls{display:grid;grid-template-columns:repeat(4,minmax(0,1fr));gap:10px;margin-bottom:14px}
+.control label{display:block;font-size:10px;font-weight:700;color:var(--muted);margin-bottom:5px}
+.control>select,.control>input{width:100%;padding:9px;border:1px solid var(--line);border-radius:8px;background:white;font-size:11px}
+.note{font-size:11px;color:var(--muted);line-height:1.5;margin:0 0 12px}
+
+/* RESPONSIVE */
+@media(max-width:1050px){
+  .topnav{padding:10px 20px;gap:14px}
+  .main{padding:20px}
+  .kpis{grid-template-columns:repeat(2,1fr)}
+}
+@media(max-width:740px){
+  .topnav{flex-wrap:wrap;padding:10px 15px;gap:10px}
+  .topnav nav{width:100%;border-radius:16px}
+  .main{padding:15px}
+  .topbar{align-items:flex-start;flex-direction:column}
+  .upload-grid,.charts,.split{grid-template-columns:1fr}
+  .compare-controls{grid-template-columns:repeat(2,minmax(0,1fr))}
+  .kpis{grid-template-columns:repeat(2,minmax(0,1fr))}
+}
+
+/* Dashboard Overview Grid - Fixed Layout */
+.dash-grid { display: flex; flex-direction: column; gap: 16px; margin-bottom: 16px; }
+
+.chart-with-table {
+  display: grid;
+  grid-template-columns: 1fr;
+  gap: 16px;
+  padding: 16px;
+}
+@media(min-width: 900px) {
+  .chart-with-table {
+    grid-template-columns: minmax(0,1fr) minmax(0,1fr); /* a wide table scrolls inside its half instead of pushing the page wider */
+    align-items: stretch;
+  }
+  .chart-with-table .chart-col {
+    display: flex;
+    flex-direction: column;
+    height: 350px;
+  }
+  .chart-with-table .chart-col .chartbox {
+    flex: 1;
+    height: 100% !important;
+    min-height: 0;
+  }
+  .chart-with-table .table-col {
+    display: flex;
+    flex-direction: column;
+    height: 350px;
+  }
+  .chart-with-table .table-col .table-wrap {
+    flex: 1;
+    max-height: 100% !important;
+    border: 1px solid var(--line);
+    border-radius: 8px;
+  }
+}
+
+/* Conditional Formatting Classes */
+.cf-high { background: rgba(23, 168, 139, 0.15) !important; font-weight: 700; color: #0f7a64; }
+.cf-med { background: rgba(243, 181, 68, 0.15) !important; color: #b57e14; }
+.cf-low { background: rgba(240, 120, 120, 0.15) !important; color: #a63b3b; }
+
+/* =========================================================
+   LAYOUT POLISH — one grid, one control height, one rhythm
+   ========================================================= */
+:root{--ctl-h:38px;--chev:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='10' height='6'%3E%3Cpath d='M1 1l4 4 4-4' fill='none' stroke='%23718096' stroke-width='1.6' stroke-linecap='round' stroke-linejoin='round'/%3E%3C/svg%3E")}
+.main{max-width:1640px;margin:0 auto;padding:24px 28px 40px}
+.topbar{align-items:flex-end;margin-bottom:18px}
+.topbar h1{font-size:26px;letter-spacing:-.4px;margin:4px 0 3px}
+.btn{height:38px;display:inline-flex;align-items:center;justify-content:center;gap:6px;border-radius:10px;font-size:11.5px;padding:0 16px;white-space:nowrap}
+.btn.secondary{border-color:#dbe3ee}
+.btn.secondary:hover:not(:disabled){background:#f6f8fb}
+
+/* vertical rhythm: every block in a view is 16px apart */
+.view.active{display:flex;flex-direction:column;gap:16px}
+.view.active>*,.dash-grid>*,#mSections>*{margin:0!important}
+#mSections{display:flex;flex-direction:column;gap:16px;margin-top:16px}
+.dash-grid,.charts,.kpis{margin:0}
+.charts{gap:16px}
+#globalFiltersBar .filters{margin-bottom:16px}
+
+/* filter bars: aligned grid, every control the same height */
+.filters{display:grid;grid-template-columns:repeat(var(--cols,5),minmax(0,1fr));gap:12px 14px;padding:14px 18px 18px;align-items:end;margin-bottom:0}
+.filters-head{grid-column:1/-1;display:flex;justify-content:space-between;align-items:center;gap:16px;padding-bottom:12px;margin-bottom:2px;border-bottom:1px solid var(--line)}
+.filters-title{font-size:12.5px;font-weight:800;color:var(--ink)}
+.load-hint{font-size:11px;font-weight:600;color:#9a6a0f;background:#fff6e2;border:1px solid #f3dca6;padding:4px 10px;border-radius:999px}
+.filters-note{font-size:11px;color:var(--muted);margin-top:3px;line-height:1.5;max-width:920px}
+.filter{min-width:0;flex:none}
+.filter label{font-size:9.5px;letter-spacing:.7px;margin-bottom:6px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.filter input[type="number"],.filter input[type="text"],.filter input[type="date"],.filter select,.ms-btn{height:var(--ctl-h);width:100%;border:1px solid #dbe3ee;border-radius:9px;background-color:#fff;color:var(--ink);font-size:12px;padding:0 11px;font-family:inherit}
+.filter select{appearance:none;-webkit-appearance:none;background:#fff var(--chev) no-repeat right 11px center;padding-right:30px;cursor:pointer}
+.ms-btn::after{content:"";width:10px;height:6px;flex:none;background:var(--chev) no-repeat center}
+.filter input:focus,.filter select:focus,.ms-btn:focus,.ms-btn.open{outline:none;border-color:var(--blue);box-shadow:0 0 0 3px rgba(50,103,233,.12)}
+.filter input::placeholder{color:#a3afc0}
+.filter.period-a label{color:#3267e9}
+.filter.period-b label{color:#118a72}
+.metric-toggle{margin-left:0;border:0;border-radius:10px;padding:3px;background:#eef2f8;gap:2px}
+.metric-toggle button{border-radius:8px;padding:7px 18px;font-size:11.5px}
+.metric-toggle button.active{box-shadow:0 2px 8px rgba(50,103,233,.3)}
+
+/* KPI cards: equal height, accent bar, figures aligned */
+.kpis{grid-template-columns:repeat(4,minmax(0,1fr));gap:16px}
+.kpi{position:relative;overflow:hidden;display:flex;flex-direction:column;min-height:112px;padding:16px 18px 14px 20px}
+.kpi::before{content:"";position:absolute;left:0;top:0;bottom:0;width:4px;background:var(--blue)}
+.kpis .kpi:nth-child(2)::before{background:var(--teal)}
+.kpis .kpi:nth-child(3)::before{background:#f3b544}
+.kpis .kpi:nth-child(4)::before{background:#8d6be8}
+.kpi .label{font-size:10px;text-transform:uppercase;letter-spacing:.7px;color:#6b7a90;font-weight:800}
+.kpi .value{font-size:26px;line-height:1.15;margin:10px 0 8px;font-variant-numeric:tabular-nums;letter-spacing:-.4px}
+.kpi .value.mval{font-size:19px}
+.kpi .hint{margin-top:auto;font-size:10px;color:#8a97a9}
+
+/* panels */
+.panel,.table-panel{padding:18px}
+.panel-head{min-height:24px;margin-bottom:14px}
+.panel-head h3{font-size:13px;font-weight:800;color:var(--ink)}
+.panel-head span{font-size:10px;color:#6b7a90;background:#f1f5fa;padding:4px 10px;border-radius:999px;white-space:nowrap}
+.panel-head span:empty{display:none}
+.chart-with-table{padding:18px;gap:20px}
+
+/* tables: aligned numbers, quiet zebra rows */
+table{font-size:11.5px}
+.table-wrap{border:1px solid var(--line);border-radius:10px}
+th{background:#f6f8fb;color:#6b7a90;font-size:9.5px;letter-spacing:.6px;font-weight:800;padding:10px 14px;border-bottom:1px solid var(--line)}
+td{padding:9px 14px;color:#2a3950;font-variant-numeric:tabular-nums;vertical-align:middle}
+td:first-child{font-weight:600;color:var(--ink)}
+th.num,td.num{text-align:right}
+tbody tr:nth-child(even) td{background:#fbfcfe}
+tbody tr:hover td{background:#f1f6ff}
+tbody tr:last-child td{border-bottom:0}
+/* Total row: stays visible at the bottom of scrolling tables */
+tfoot td{position:sticky;bottom:0;z-index:1;background:#eaf1fc;font-weight:800;color:var(--ink);border-top:2px solid #c9d8f0;padding:10px 14px;font-variant-numeric:tabular-nums}
+/* rows that open the drill-down popup */
+tbody.drillable tr{cursor:pointer}
+tbody.drillable tr:hover td{background:#e3edff}
+.drill-overlay{z-index:1500}
+
+/* no page header: each view starts with its filter bar, which carries the actions */
+.topbar{display:none}
+.main{padding-top:20px}
+.filters-title{font-size:15px;letter-spacing:-.2px}
+.head-right{display:flex;align-items:center;gap:10px;flex-wrap:wrap;justify-content:flex-end}
+.view-actions{display:flex;align-items:center;gap:6px;padding-right:10px;margin-right:2px;border-right:1px solid var(--line)}
+.btn.sm{height:32px;padding:0 12px;font-size:11px;border-radius:8px}
+.filters-head .metric-toggle button{padding:6px 16px}
+/* upload page keeps a small heading of its own */
+#view-upload::before{content:attr(data-title);font-size:20px;font-weight:800;letter-spacing:-.3px;color:var(--ink)}
+
+/* Supabase source */
+#srcSettings{max-width:900px}
+#srcSettings .filter{margin-top:4px}
+#srcHint{overflow-wrap:anywhere}
+.src-box{display:flex;align-items:center;justify-content:space-between;gap:12px;padding:12px 14px;margin-bottom:10px;border-radius:10px;background:#eef4ff;border:1px solid #d6e3ff}
+.src-status{font-size:11.5px;font-weight:600;color:#2a4a8f}
+.src-status.warning{color:#c14444}
+/* "Menu Mix" status pill in the top bar (downloaded copy) */
+.navitem.src-pill{background:#fff;color:var(--ink);font-weight:700;box-shadow:0 1px 3px rgba(20,36,59,.12);gap:7px}
+.navitem.src-pill .tick{display:inline-grid;place-items:center;width:17px;height:17px;border-radius:50%;background:#17a88b;color:#fff;font-size:10px;font-weight:900;opacity:1}
+.navitem.src-pill .warn{display:inline-grid;place-items:center;width:17px;height:17px;border-radius:50%;background:#d64545;color:#fff;font-size:11px;font-weight:900;opacity:1}
+.navitem.src-pill .spin{display:inline-block;color:var(--blue);font-size:14px;opacity:1;animation:vxspin 1s linear infinite}
+.navitem.src-pill small{font-size:10.5px;font-weight:600;color:var(--muted);margin-left:2px}
+.navitem.src-pill.error small{color:#c14444;max-width:220px;overflow:hidden;text-overflow:ellipsis}
+.navitem.src-pill.done:hover{background:#f0faf7}
+@keyframes vxspin{to{transform:rotate(360deg)}}
+@media(max-width:1280px){.navitem.src-pill span{display:inline-grid}.navitem.src-pill .spin{display:inline-block}}
+
+/* responsive: fewer columns on smaller screens */
+@media(max-width:1280px){.navitem{padding:8px 11px;font-size:11.5px}.navitem span{display:none}}
+@media(max-width:1050px){.kpis{grid-template-columns:repeat(2,minmax(0,1fr))}}
+@media(max-width:900px){.filters{grid-template-columns:repeat(2,minmax(0,1fr))}}
+@media(max-width:740px){
+  .filters{padding:12px 14px 14px}
+  .filters-head{flex-wrap:wrap}
+  .main{padding:16px}
+}
+</style></head><body><div class="app">
+
+<header class="topnav" id="topnav">
+  <div class="brand"><div class="logo">V</div><div><h2>ViewX</h2><small>BUSINESS INTELLIGENCE</small></div></div>
+  <nav>
+    <button class="navitem active" data-view="upload"><span>↥</span>Upload Data</button>
+    <button class="navitem" data-view="overview"><span>▦</span>Dashboard</button>
+    <button class="navitem" data-view="products"><span>▤</span>Product Performance</button>
+    <button class="navitem" data-view="stores"><span>⌖</span>Store Performance</button>
+    <button class="navitem" data-view="menumix"><span>◫</span>Menu Mix</button>
+    <button class="navitem" data-view="sizes"><span>％</span>Size Mix %</button>
+    <button class="navitem" data-view="compare"><span>⇄</span>Comparison</button>
+  </nav>
+  <div class="userbox hidden" id="userBox">
+    <div class="who"><b id="userName"></b><small id="userRole"></small></div>
+    <button type="button" class="btn sm secondary hidden" id="delMonthBtn" title="Delete one month of Menu Mix sales from the database (admins only)">🗑 Delete month</button>
+    <button type="button" class="btn sm secondary" id="pwChangeBtn">Change password</button>
+    <button type="button" class="btn sm secondary" id="signOutBtn">Sign out</button>
+  </div>
+</header>
+
+<main class="main">
+  <header class="topbar">
+    <div class="topbar-left">
+      <div>
+        <div class="eyebrow">Operations intelligence</div>
+        <h1 id="pageTitle">Data Ingestion</h1>
+        <div class="subtitle" id="pageSubtitle">Upload your Menu Mix file to build the dashboard. Category and store mappings are built in.</div>
+      </div>
+    </div>
+  </header>
+  <!-- view actions: moved into the filter bar of whichever view is open -->
+  <div class="view-actions hidden" id="topActions" data-html2canvas-ignore="true">
+    <button class="btn sm primary" id="topCmp" title="Compare two months for this module in a full-screen window">⇄ Compare 2 months</button>
+    <button class="btn sm secondary" id="topPdf" title="Download this view as a PDF">⭳ Export PDF</button>
+    <button class="btn sm secondary" id="exportBtn" title="Download the filtered sales rows as a CSV file (opens in Excel)" disabled>⭳ Export Excel (CSV)</button>
+  </div>
+
+<!-- UPLOAD VIEW -->
+<section id="view-upload" class="view active" data-title="Upload Data">
+  <section class="upload-grid" id="uploadArea">
+    <div class="upload-card">
+      <div class="upload-head"><div class="upload-icon">↥</div><div><h3>Menu Mix File</h3><p>Sales, quantity, store and item</p></div></div>
+      <div class="dropzone"><input id="menuFile" type="file" accept=".xlsx,.xls,.csv"><div class="filename" id="menuName">No file selected</div></div>
+      <div class="joinnote">Main data. Must include INVD_ITEM, INVD_STR_ID, QTY and AMOUNT.</div>
+    </div>
+    <div class="upload-card">
+      <div class="upload-head"><div class="upload-icon">▦</div><div><h3>Category Mapping 🔒</h3><p>Built in — password needed to change it</p></div></div>
+      <div class="dropzone"><div class="filename" id="categoryName" style="margin:0 0 8px">Checking…</div><input id="categoryFile" type="file" accept=".xlsx,.xls,.csv"></div>
+      <div class="joinnote">Joined on INVD_ITEM to add Size, Category and Sub Category. Choose a file here only when the mapping changes.</div>
+    </div>
+    <div class="upload-card">
+      <div class="upload-head"><div class="upload-icon">♙</div><div><h3>Store Allocation 🔒</h3><p>Built in — password needed to change it</p></div></div>
+      <div class="dropzone"><div class="filename" id="allocationName" style="margin:0 0 8px">Checking…</div><input id="allocationFile" type="file" accept=".xlsx,.xls,.csv"></div>
+      <div class="joinnote">Joined on INVD_STR_ID to add the Area Manager. Choose a file here only when the allocation changes.</div>
+    </div>
+  </section>
+  <div class="toolbar" id="uploadToolbar">
+    <button class="btn primary" id="buildBtn" disabled>Build Dashboard →</button>
+    <button class="btn secondary" id="resetBtn">Reset Sales Data</button>
+    <div class="message" id="message">Upload the Menu Mix file to begin.</div>
+  </div>
+  <div class="toolbar">
+    <button class="btn secondary" id="bakeBtn" disabled>Save mappings into dashboard file ⭳</button>
+    <button class="btn secondary" id="revertBtn" disabled>Revert to built-in mappings</button>
+    <div class="message" id="refNote"></div>
+  </div>
+  <div class="upload-card src-settings" id="srcSettings">
+    <div class="upload-head"><div class="upload-icon">☁</div><div><h3>Menu Mix source for the downloaded file</h3><p>The downloaded dashboard loads Menu Mix from this Supabase file by itself</p></div></div>
+    <div class="filter"><label>Supabase file link</label><input type="text" id="srcUrl" spellcheck="false" autocomplete="off"></div>
+    <div class="joinnote" id="srcHint">Paste the file's public URL or its Supabase dashboard link. Leave empty to upload Menu Mix by hand in the downloaded file. Saved with "Save mappings into dashboard file".</div>
+  </div>
+</section>
+
+<!-- DASHBOARD VIEW -->
+<section id="dashboard" class="hidden">
+
+<!-- GLOBAL FILTERS (Main Dashboard) -->
+<div id="globalFiltersBar">
+  <div class="filters" style="--cols:5">
+    <div class="filters-head">
+      <div style="display:flex;align-items:center;gap:12px;flex-wrap:wrap"><div class="filters-title" id="gfTitle">Filters</div><span class="load-hint hidden" id="fLoadHint"></span></div>
+      <div class="head-right">
+        <div class="actions-slot"></div>
+        <div class="metric-toggle" title="Show figures by sales value or by quantity">
+          <button type="button" id="btnMetricSales" class="active" onclick="switchMetric('sales')">Sales</button>
+          <button type="button" id="btnMetricQty" onclick="switchMetric('qty')">Qty</button>
+        </div>
+      </div>
+    </div>
+    <div class="filter"><label>Area Manager</label><div class="ms-container" id="ms-fAM"></div></div>
+    <div class="filter"><label>Store</label><div class="ms-container" id="ms-fStore"></div></div>
+    <div class="filter"><label>Category</label><div class="ms-container" id="ms-fCategory"></div></div>
+    <div class="filter"><label>Sub Category</label><div class="ms-container" id="ms-fSub"></div></div>
+    <div class="filter"><label>Size</label><div class="ms-container" id="ms-fSize"></div></div>
+    <div class="filter"><label>Product / Long Name</label><div class="ms-container" id="ms-fProduct"></div></div>
+    <div class="filter"><label>Year</label><div class="ms-container" id="ms-fYear"></div></div>
+    <div class="filter"><label>Month</label><div class="ms-container" id="ms-fMonth"></div></div>
+    <div class="filter"><label>From (day)</label><input id="fFrom" type="number" min="1" max="31" step="1" placeholder="1"></div>
+    <div class="filter"><label>To (day)</label><input id="fTo" type="number" min="1" max="31" step="1" placeholder="31"></div>
+  </div>
+</div>
+
+<!-- OVERVIEW DASHBOARD -->
+<section class="view" id="view-overview">
+  <div class="kpis">
+    <div class="kpi"><div class="label" id="kpi1Label">Sales / Amount</div><div class="value" id="kSales">—</div><div class="hint" id="kpi1Hint">Sum of AMOUNT</div></div>
+    <div class="kpi"><div class="label" id="kpi2Label">Units Sold</div><div class="value" id="kQty">—</div><div class="hint" id="kpi2Hint">Sum of QTY</div></div>
+    <div class="kpi"><div class="label">Active Stores</div><div class="value" id="kStores">—</div><div class="hint">Unique stores in selection</div></div>
+    <div class="kpi"><div class="label">Unique Products</div><div class="value" id="kProducts">—</div><div class="hint">Unique item codes in selection</div></div>
+  </div>
+
+  <div class="dash-grid">
+    <div class="panel chart-with-table">
+      <div class="chart-col">
+        <div class="panel-head"><h3 id="catAmountTitle">Category Sales Comparison (Amount)</h3><span id="catAmountSpan">Sales Value</span></div>
+        <div class="chartbox"><canvas id="catAmountChart"></canvas></div>
+      </div>
+      <div class="table-col">
+        <div class="table-wrap">
+          <table><thead><tr><th data-sort="catAmount" class="sortable">Category <span class="sort-icon"></span></th><th class="num sortable" data-sort="catAmount" id="catAmountColHdr">Sales <span class="sort-icon"></span></th><th class="num sortable" data-sort="catAmount">Share % <span class="sort-icon"></span></th></tr></thead><tbody id="catAmountRows"></tbody></table>
+        </div>
+      </div>
+    </div>
+
+    <div class="panel chart-with-table">
+      <div class="chart-col">
+        <div class="panel-head"><h3 id="amContTitle">Area Manager Contribution</h3><span id="amContSpan">Sales Value</span></div>
+        <div class="chartbox"><canvas id="amContChart"></canvas></div>
+      </div>
+      <div class="table-col">
+        <div class="table-wrap">
+          <table><thead><tr><th data-sort="amCont" class="sortable">Area Manager <span class="sort-icon"></span></th><th class="num sortable" data-sort="amCont" id="amContColHdr">Sales <span class="sort-icon"></span></th><th class="num sortable" data-sort="amCont">Share % <span class="sort-icon"></span></th></tr></thead><tbody id="amContRows"></tbody></table>
+        </div>
+      </div>
+    </div>
+
+    <div class="panel chart-with-table">
+      <div class="chart-col">
+        <div class="panel-head"><h3 id="storeContTitle">Store Contribution</h3><span id="storeContSpan">Sales Value</span></div>
+        <div class="chartbox"><canvas id="storeContChart"></canvas></div>
+      </div>
+      <div class="table-col">
+        <div class="table-wrap">
+          <table><thead><tr><th data-sort="storeCont" class="sortable">Store <span class="sort-icon"></span></th><th class="num sortable" data-sort="storeCont" id="storeContColHdr">Sales <span class="sort-icon"></span></th><th class="num sortable" data-sort="storeCont">Share % <span class="sort-icon"></span></th></tr></thead><tbody id="storeContRows"></tbody></table>
+        </div>
+      </div>
+    </div>
+
+    <div class="panel">
+      <div class="panel-head"><h3 id="trendTitle">Sales Trend</h3><span>By Date</span></div>
+      <div class="chartbox" style="height:300px;"><canvas id="trendChart"></canvas></div>
+    </div>
+  </div>
+</section>
+
+<section class="view" id="view-products"><div class="panel"><div class="panel-head"><h3>Product Performance</h3><span>Ranked by sales</span></div><div class="chartbox"><canvas id="productChart"></canvas></div></div><div class="table-panel"><div class="panel-head"><h3>Product performance detail</h3><span id="productCount"></span></div><div class="table-wrap"><table><thead><tr><th>Rank</th><th>Item Code</th><th>Product</th><th>Size</th><th>Category</th><th class="num">Qty</th><th class="num">Sales</th><th class="num">Sales %</th></tr></thead><tbody id="productRows"></tbody></table></div></div></section>
+<section class="view" id="view-stores"><div class="panel"><div class="panel-head"><h3>Store Performance</h3><span>Ranked by sales</span></div><div class="chartbox"><canvas id="storeChart"></canvas></div></div><div class="table-panel"><div class="panel-head"><h3>Store performance detail</h3><span id="storeCount"></span></div><div class="table-wrap"><table><thead><tr><th>Rank</th><th>Store ID</th><th>Store</th><th>Area Manager</th><th class="num">Qty</th><th class="num">Sales</th><th class="num">Sales %</th></tr></thead><tbody id="storeRows"></tbody></table></div></div></section>
+<section class="view" id="view-menumix"><div class="charts"><div class="panel"><div class="panel-head"><h3>Category sales mix</h3><span>Amount</span></div><div class="chartbox"><canvas id="mixCategoryChart"></canvas></div></div><div class="panel"><div class="panel-head"><h3>Sub-category sales mix</h3><span>Amount</span></div><div class="chartbox"><canvas id="subChart"></canvas></div></div></div><div class="table-panel"><div class="panel-head"><h3>Menu mix detail</h3><span>Product contribution</span></div><div class="table-wrap"><table><thead><tr><th>Item Code</th><th>Product</th><th>Category</th><th>Sub Category</th><th>Size</th><th class="num">Qty</th><th class="num">Qty %</th><th class="num">Sales</th><th class="num">Sales %</th></tr></thead><tbody id="mixRows"></tbody></table></div></div></section>
+
+<!-- SIZE MIX VIEW (Local Filters) -->
+<section class="view" id="view-sizes">
+  <div class="filters" style="--cols:6">
+    <div class="filters-head">
+      <div style="display:flex;align-items:center;gap:12px;flex-wrap:wrap"><div class="filters-title">Size Mix %</div><span class="load-hint hidden" id="sfLoadHint"></span></div>
+      <div class="head-right">
+        <div class="actions-slot"></div>
+        <div class="metric-toggle" title="Size group">
+          <button type="button" id="btnSizeHot" class="active" onclick="switchSizeGroup('hot')">Hot</button>
+          <button type="button" id="btnSizeCold" onclick="switchSizeGroup('cold')">Cold</button>
+          <button type="button" id="btnSizeJoeBox" onclick="switchSizeGroup('joebox')">Joe Box</button>
+        </div>
+      </div>
+    </div>
+    <div class="filter"><label>Area Manager</label><div class="ms-container" id="ms-sfAM"></div></div>
+    <div class="filter"><label>Store</label><div class="ms-container" id="ms-sfStore"></div></div>
+    <div class="filter"><label>Year</label><div class="ms-container" id="ms-sfYear"></div></div>
+    <div class="filter"><label>Month</label><div class="ms-container" id="ms-sfMonth"></div></div>
+    <div class="filter"><label>From (day)</label><input id="sfFrom" type="number" min="1" max="31" step="1" placeholder="1"></div>
+    <div class="filter"><label>To (day)</label><input id="sfTo" type="number" min="1" max="31" step="1" placeholder="31"></div>
+  </div>
+
+  <div class="kpis">
+    <div class="kpi"><div class="label">Active Sizes</div><div class="value" id="sizeCount">—</div><div class="hint">Distinct mapped sizes</div></div>
+    <div class="kpi"><div class="label">Top size by units</div><div class="value" id="topSize">—</div><div class="hint">Highest quantity share</div></div>
+    <div class="kpi"><div class="label">Top size quantity %</div><div class="value" id="topSizePct">—</div><div class="hint">Of all selected units</div></div>
+    <div class="kpi"><div class="label">Unmapped size units</div><div class="value" id="unknownSize">—</div><div class="hint">Size missing in category mapping</div></div>
+  </div>
+
+  <div class="charts">
+    <div class="panel"><div class="panel-head"><h3>Size mix % by quantity</h3><span>Share of units</span></div><div class="chartbox"><canvas id="sizeQtyChart"></canvas></div></div>
+    <div class="panel"><div class="panel-head"><h3>Size mix % by sales</h3><span>Share of sales</span></div><div class="chartbox"><canvas id="sizeSalesChart"></canvas></div></div>
+  </div>
+
+  <div class="table-panel">
+    <div class="panel-head"><h3>Size contribution table</h3><span>Filtered by Size Group</span></div>
+    <div class="table-wrap">
+      <table><thead><tr><th>Size</th><th class="num">Qty</th><th class="num">Qty %</th><th class="num">Sales</th><th class="num">Sales %</th><th class="num">Product count</th></tr></thead><tbody id="sizeRows"></tbody></table>
+    </div>
+  </div>
+
+  <div class="table-panel">
+    <div class="panel-head"><h3>Store-wise Size Breakdown</h3><span>% of each store's total qty</span></div>
+    <div class="table-wrap">
+      <table>
+        <thead id="storeSizeThead">
+          <tr id="storeSizeHeaderRow">
+            <th>Store</th>
+            <th class="num">Total Qty</th>
+            <th class="num">Total Sales</th>
+          </tr>
+        </thead>
+        <tbody id="storeSizeRows"></tbody>
+      </table>
+    </div>
+  </div>
+</section>
+
+<!-- COMPARISON VIEW (Local Filters) -->
+<section class="view" id="view-compare">
+  <div class="filters" style="--cols:4">
+    <div class="filters-head">
+      <div>
+        <div class="filters-title">Comparison settings</div>
+        <div class="filters-note">Pick a From and To date for Period A and for Period B (any range, e.g. 1–15 Oct vs 1–15 Nov). An empty date means no limit on that side. Change % = (B − A) ÷ A.</div>
+      </div>
+      <div class="head-right">
+        <div class="actions-slot"></div>
+        <button class="btn sm primary" id="compareBtn">Run Comparison</button>
+      </div>
+    </div>
+    <div class="filter period-a"><label>Period A · From date</label><input id="aFrom" type="date"></div>
+    <div class="filter period-a"><label>Period A · To date</label><input id="aTo" type="date"></div>
+    <div class="filter period-b"><label>Period B · From date</label><input id="bFrom" type="date"></div>
+    <div class="filter period-b"><label>Period B · To date</label><input id="bTo" type="date"></div>
+    <div class="filter"><label>Compare by</label><select id="compareBy"><option value="__category">Category</option><option value="__sub">Sub Category</option><option value="__size">Size</option><option value="__manager">Area Manager</option><option value="__store">Store</option><option value="__product">Product</option></select></div>
+    <div class="filter"><label>Area Manager</label><div class="ms-container" id="ms-cfAM"></div></div>
+    <div class="filter"><label>Store code</label><div class="ms-container" id="ms-cfStore"></div></div>
+    <div class="filter"><label>Category</label><div class="ms-container" id="ms-cfCat"></div></div>
+    <div class="filter"><label>Sub Category</label><div class="ms-container" id="ms-cfSub"></div></div>
+  </div>
+
+  <div class="kpis">
+    <div class="kpi"><div class="label">Period A Sales</div><div class="value" id="aSales">—</div><div class="hint">Sum of AMOUNT</div></div>
+    <div class="kpi"><div class="label">Period B Sales</div><div class="value" id="bSales">—</div><div class="hint">Sum of AMOUNT</div></div>
+    <div class="kpi"><div class="label">Sales Change</div><div class="value" id="salesChange">—</div><div class="hint">(B − A) ÷ A</div></div>
+    <div class="kpi"><div class="label">Quantity Change</div><div class="value" id="qtyChange">—</div><div class="hint">(B − A) ÷ A</div></div>
+  </div>
+
+  <div class="panel">
+    <div class="panel-head"><h3>Period A vs Period B sales</h3><span>By selected dimension</span></div>
+    <div class="chartbox"><canvas id="compareChart"></canvas></div>
+  </div>
+
+  <div class="table-panel">
+    <div class="panel-head"><h3>Comparison detail</h3><span>Sales and quantity change</span></div>
+    <div class="table-wrap"><table><thead><tr><th>Dimension</th><th class="num">A Qty</th><th class="num">B Qty</th><th class="num">Qty Change %</th><th class="num">A Sales</th><th class="num">B Sales</th><th class="num">Sales Change %</th></tr></thead><tbody id="compareRows"></tbody></table></div>
+  </div>
+  <div class="table-panel" id="cmpSizePanel">
+    <div class="panel-head"><h3>Size Mix % comparison</h3><div style="display:flex;align-items:center;gap:10px;flex-wrap:wrap"><span id="cmpSizeNote">Share of units, Period A vs Period B</span><div class="metric-toggle" title="Size group"><button type="button" id="cmpSz_hot" class="active" onclick="switchCmpSizeGroup('hot')">Hot</button><button type="button" id="cmpSz_cold" onclick="switchCmpSizeGroup('cold')">Cold</button><button type="button" id="cmpSz_joebox" onclick="switchCmpSizeGroup('joebox')">Joe Box</button></div></div></div>
+    <div class="chartbox"><canvas id="cmpSizeChart"></canvas></div>
+    <div class="table-wrap"><table><thead><tr><th>Size</th><th class="num">A Qty</th><th class="num">A Qty %</th><th class="num">B Qty</th><th class="num">B Qty %</th><th class="num">Qty % change</th><th class="num">A Sales %</th><th class="num">B Sales %</th><th class="num">Sales % change</th></tr></thead><tbody id="cmpSizeRows"></tbody></table></div>
+  </div>
+
+  <div class="table-panel">
+    <div class="panel-head"><h3>Store-wise Size Mix % comparison</h3><span>Period A % → Period B % of each store's qty</span></div>
+    <div class="table-wrap"><table><thead id="cmpStoreSizeHead"></thead><tbody id="cmpStoreSizeRows"></tbody></table></div>
+  </div>
+
+</section>
+
+</section><div class="footer">ViewX • Menu Mix Intelligence • Data is processed locally in this browser.</div></main></div>
+<!-- PASSWORD PROMPT (protects the Category / Allocation mappings) -->
+<!-- SIGN-IN SCREEN (Supabase): everyone signs in; each person only receives their own stores -->
+<div class="pw-overlay login-overlay hidden" id="loginModal">
+  <form class="pw-box" id="loginForm">
+    <div class="brand" style="margin-bottom:16px"><div class="logo">V</div><div><h2>ViewX</h2><small>MENU MIX INTELLIGENCE</small></div></div>
+    <h3>Sign in</h3>
+    <p class="note">Use your dr.CAFE email and password.</p>
+    <input type="email" id="loginEmail" placeholder="Email" autocomplete="username" required style="margin-bottom:8px">
+    <input type="password" id="loginPass" placeholder="Password" autocomplete="current-password" required>
+    <div class="pw-err" id="loginErr"></div>
+    <button type="submit" class="btn primary" id="loginBtn" style="width:100%;margin-top:8px">Sign in</button>
+  </form>
+</div>
+<!-- CHANGE PASSWORD -->
+<div class="pw-overlay hidden" id="cpModal">
+  <form class="pw-box" id="cpForm">
+    <h3>Change password</h3>
+    <p class="note">At least 8 characters.</p>
+    <input type="password" id="cpNew" placeholder="New password" autocomplete="new-password" style="margin-bottom:8px">
+    <input type="password" id="cpNew2" placeholder="New password again" autocomplete="new-password">
+    <div class="pw-err" id="cpErr"></div>
+    <div class="toolbar" style="justify-content:flex-end;margin:14px 0 0">
+      <button type="button" class="btn secondary" id="cpCancel">Cancel</button>
+      <button type="submit" class="btn primary">Save</button>
+    </div>
+  </form>
+</div>
+<!-- ADMIN: DELETE ONE MONTH OF MENU MIX SALES -->
+<div class="pw-overlay hidden" id="delModal">
+  <form class="pw-box" id="delForm">
+    <h3>🗑 Delete a month of Menu Mix data</h3>
+    <p class="note">This permanently removes the month's sales from the database for everyone. It cannot be undone. Remove the same month from the Menu Mix file in storage too, or the next upload will add it back.</p>
+    <select id="delMonth" style="width:100%;height:38px;border:1px solid var(--line);border-radius:8px;padding:0 10px;margin-bottom:8px;font-size:13px"></select>
+    <input type="text" id="delConfirm" placeholder="Type DELETE to confirm" autocomplete="off">
+    <div class="pw-err" id="delErr"></div>
+    <div class="toolbar" style="justify-content:flex-end;margin:14px 0 0">
+      <button type="button" class="btn secondary" id="delCancel">Cancel</button>
+      <button type="submit" class="btn primary" id="delGo" style="background:#c14444">Delete month</button>
+    </div>
+  </form>
+</div>
+<div class="pw-overlay hidden" id="pwModal">
+  <form class="pw-box" id="pwForm">
+    <h3>🔒 Password required</h3>
+    <p class="note">Enter the password to change or save the Category and Allocation mappings.</p>
+    <input type="password" id="pwInput" autocomplete="off" placeholder="Password">
+    <div class="pw-err" id="pwErr"></div>
+    <div class="toolbar" style="justify-content:flex-end;margin:14px 0 0">
+      <button type="button" class="btn secondary" id="pwCancel">Cancel</button>
+      <button type="submit" class="btn primary">Unlock</button>
+    </div>
+  </form>
+</div>
+
+<!-- FULL-SCREEN 2-MONTH COMPARISON POPUP (its sections are built per module) -->
+<div class="cmp-overlay hidden" id="cmpModal">
+  <div class="cmp-body" id="cmpBody">
+    <div class="cmp-head">
+      <div>
+        <div class="eyebrow">Two-month comparison</div>
+        <h2 id="cmpTitle">Comparison</h2>
+        <div class="subtitle" id="cmpSub"></div>
+      </div>
+      <div class="top-actions" data-html2canvas-ignore="true">
+        <button class="btn sm secondary" id="cmpPdf">Export PDF</button>
+        <button class="btn sm secondary" id="cmpCsv" title="Download the sales rows behind both months as a CSV file">Export filtered data (CSV)</button>
+        <button class="btn sm primary" id="cmpClose">✕ Close</button>
+      </div>
+    </div>
+    <div class="filters" style="--cols:4">
+      <div class="filter period-a"><label>Month A</label><select id="mA"></select></div>
+      <div class="filter period-b"><label>Month B</label><select id="mB"></select></div>
+      <div class="filter"><label>From (day)</label><input id="mFrom" type="number" min="1" max="31" step="1" placeholder="1"></div>
+      <div class="filter"><label>To (day)</label><input id="mTo" type="number" min="1" max="31" step="1" placeholder="31"></div>
+    </div>
+    <div id="mSections"></div>
+  </div>
+</div>
+
+<!-- DRILL-DOWN POPUP: opened by clicking a row in any table -->
+<div class="cmp-overlay drill-overlay hidden" id="drillModal">
+  <div class="cmp-body" id="drillBody">
+    <div class="cmp-head">
+      <div>
+        <div class="eyebrow" id="drillEyebrow">Details</div>
+        <h2 id="drillTitle"></h2>
+        <div class="subtitle" id="drillSub"></div>
+      </div>
+      <div class="top-actions" data-html2canvas-ignore="true">
+        <button class="btn sm secondary" id="drillXls">⭳ Export Excel</button>
+        <button class="btn sm secondary" id="drillPdf">⭳ Export PDF</button>
+        <button class="btn sm primary" id="drillClose">✕ Close</button>
+      </div>
+    </div>
+    <div id="drillSections" style="display:flex;flex-direction:column;gap:16px"></div>
+  </div>
+</div>
+
+<!-- BUILT-IN MAPPINGS: the "Save mappings into dashboard file" button rewrites this block. -->
+<script id="embeddedRef" type="application/json">{"category":null,"allocation":null}</script>
+<script>
+'use strict';
+const PRISTINE='<!DOCTYPE html>\n'+document.documentElement.outerHTML; // untouched page source, used to save a copy with new mappings
+const $=id=>document.getElementById(id);
+let rawRows=[],charts={},files={menu:null};
+
+/* Reference data (category mapping + store allocation): built into this file, optionally
+   overridden by a newer upload that is remembered in this browser. */
+const REF_KEYS={category:'refCategory',allocation:'refAllocation'};
+let builtinRef={category:null,allocation:null};
+let SOURCE=null; // {url,label}: where a downloaded copy fetches Menu Mix from (Supabase Storage)
+try{const e=JSON.parse($('embeddedRef').textContent||'{}');builtinRef={category:e.category||null,allocation:e.allocation||null};SOURCE=e.source&&e.source.url?e.source:null}catch(e){console.warn('Built-in mappings unreadable',e)}
+let menuSig=''; // version of the Menu Mix data behind the current rows (Supabase ETag, or the uploaded file)
+let ref={category:builtinRef.category,allocation:builtinRef.allocation};
+const refReady=()=>!!(ref.category&&ref.category.rows.length&&ref.allocation&&ref.allocation.rows.length);
+const canBuild=()=>!!(files.menu&&refReady());
+const refSig=()=>refReady()?ref.category.updated+'|'+ref.allocation.updated:'';
+const pickRef=(builtin,saved)=>!saved?builtin:(!builtin||saved.updated>builtin.updated)?saved:builtin;
+/* SUPABASE: everyone signs in; each person receives only their own stores' data (filtered in the
+   database, see supabase_setup.sql). Files are uploaded to the private bucket below with these
+   names; when an admin opens the dashboard, changed files are copied into the database.
+   The anon key is the project's public "anon" key; it is meant to be public.
+   Leave anonKey empty to go back to the old way (upload the files by hand in this page). */
+const SUPABASE={
+  url:'https://lktzoodnektvuznpkswq.supabase.co',
+  anonKey:'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImxrdHpvb2RuZWt0dnV6bnBrc3dxIiwicm9sZSI6ImFub24iLCJpYXQiOjE3OTQ5MzMxMjQsImV4cCI6MjExMDUwOTEyNH0.a80uHPYiJSdwruUsmxduyEv0hZr2RtL8wW9-d6NWfXk',
+  bucket:'Menu Mix',
+  files:{menu:'Menu Mix.xlsx',category:'Category.xlsx',allocation:'Allocation.csv'}
+};
+const AUTHMODE=!!(SUPABASE.url&&SUPABASE.anonKey);
+/* ONE SIGN-IN: people sign in on the Sales dashboard (drcafe-bi.com). Its sign-in is checked by the
+   sales-sso function in this project, which copies the person's role and stores from the Sales
+   dashboard and starts a Menu Mix session. Inside the Sales dashboard the sign-in is passed in
+   automatically; opened on its own, this page asks for the Sales dashboard email and password. */
+const SALES={url:'https://gwpzztcojzirwdqdwikq.supabase.co',anonKey:'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Imd3cHp6dGNvanppcndkcWR3aWtxIiwicm9sZSI6ImFub24iLCJpYXQiOjE3OTMyMjAxNTYsImV4cCI6MjEwODc5NjE1Nn0._TFYNKT1LYj4y6nSJRtmCLiMB756QmEgV_6atAweUu0'};
+const SHARED=window.self!==window.top;                                     // opened inside the Sales dashboard
+const PARENT_ORIGINS=['https://drcafe-bi.com','https://www.drcafe-bi.com']; // where the Sales dashboard is hosted
+let parentToken='',tokenWaiters=[];
+const tokenExp=t=>{try{const p=t.split('.')[1].replace(/-/g,'+').replace(/_/g,'/');return JSON.parse(atob(p+'='.repeat((4-p.length%4)%4))).exp*1000}catch(e){return 0}};
+function salesTokenFromParent(){
+  if(parentToken&&tokenExp(parentToken)-Date.now()>60000)return Promise.resolve(parentToken);
+  return new Promise((resolve,reject)=>{
+    const t=setTimeout(()=>reject(Error('no sign-in from the Sales dashboard — sign in there and reopen Menu Mix')),10000);
+    tokenWaiters.push(tok=>{clearTimeout(t);resolve(tok)});
+    PARENT_ORIGINS.forEach(o=>window.parent.postMessage({type:'viewx-need-session'},o));
+  });
+}
+window.addEventListener('message',e=>{
+  if(!SHARED||e.source!==window.parent||!PARENT_ORIGINS.includes(e.origin))return;
+  const d=e.data||{};
+  if(d.type==='viewx-session'&&typeof d.access_token==='string'){parentToken=d.access_token;tokenWaiters.splice(0).forEach(f=>f(parentToken))}
+  else if(d.type==='viewx-signout'){
+    parentToken='';ME=null;rawRows=[];deleteFromDB(CACHE_KEY);forgetSso();
+    try{sb().auth.signOut({scope:'local'}).catch(()=>{})}catch(err){}
+    $('dashboard').classList.add('hidden');$('userBox').classList.add('hidden');showView('upload');
+    setNavState('error','Signed out in the Sales dashboard');
+    setSrcStatus('Signed out. Sign in to the Sales dashboard to see Menu Mix.',true);
+  }
+});
+// Swaps a Sales dashboard sign-in for a Menu Mix session (the sales-sso function checks it with the Sales project)
+async function exchangeSalesToken(token){
+  const res=await fetch(`${SUPABASE.url}/functions/v1/sales-sso`,{method:'POST',
+    headers:{'Content-Type':'application/json',apikey:SUPABASE.anonKey},body:JSON.stringify({token})});
+  const j=await res.json().catch(()=>({}));
+  if(!res.ok||!j.access_token){const er=Error(j.error||('sign-in failed (HTTP '+res.status+')'));er.status=res.status;throw er}
+  const {error}=await sb().auth.setSession({access_token:j.access_token,refresh_token:j.refresh_token});
+  if(error)throw error;
+  try{localStorage.setItem(SSO_KEY,JSON.stringify({email:tokenEmail(token),t:Date.now()}))}catch(e){}
+}
+/* FAST RE-OPEN: the swap above takes several network calls. The same person's Menu Mix sign-in is
+   reused instead: within SSO_REUSE_MS as it is, and up to SSO_KEEP_MS with the swap done again
+   quietly after the data is on screen (that picks up role and store changes made in the Sales dashboard). */
+const SSO_KEY='viewx-mm-sso',SSO_REUSE_MS=30*60*1000,SSO_KEEP_MS=7*24*60*60*1000;
+function tokenEmail(t){try{const p=t.split('.')[1].replace(/-/g,'+').replace(/_/g,'/');return String(JSON.parse(atob(p+'='.repeat((4-p.length%4)%4))).email||'').toLowerCase()}catch(e){return ''}}
+function forgetSso(){try{localStorage.removeItem(SSO_KEY)}catch(e){}}
+async function reuseMenuMixSession(salesToken){
+  try{
+    const email=tokenEmail(salesToken),last=JSON.parse(localStorage.getItem(SSO_KEY)||'null');
+    if(!email||!last||last.email!==email||Date.now()-last.t>SSO_KEEP_MS)return false;
+    const {data}=await sb().auth.getSession(),s=data&&data.session;
+    if(!s||!s.user||String(s.user.email||'').toLowerCase()!==email)return false;
+    if(s.expires_at*1000-Date.now()<120000){const r=await sb().auth.refreshSession();if(r.error||!r.data||!r.data.session)return false}
+    return Date.now()-last.t>SSO_REUSE_MS?'stale':'fresh';
+  }catch(e){return false}
+}
+// the quiet swap for a reused sign-in: if the role or stores changed, load again; if access was removed, sign out here
+function refreshSsoLater(tok){
+  exchangeSalesToken(tok).then(async()=>{
+    const {data,error}=await sb().rpc('mm_me');if(error||!data)return;
+    if(JSON.stringify({...data,stores:data.stores||[]})!==JSON.stringify(ME))startAuthed();
+  }).catch(e=>{
+    console.warn('Menu Mix sign-in refresh failed',e);
+    if(e&&(e.status===401||e.status===403)){
+      parentToken='';ME=null;rawRows=[];deleteFromDB(CACHE_KEY);forgetSso();
+      try{sb().auth.signOut({scope:'local'}).catch(()=>{})}catch(err){}
+      $('dashboard').classList.add('hidden');$('userBox').classList.add('hidden');showView('upload');
+      setNavState('error','No Menu Mix access: '+errText(e));setSrcStatus('No Menu Mix access: '+errText(e),true);
+    }
+  });
+}
+// FAST OPEN: this person's last loaded data from this browser goes on screen at once (it is checked right after)
+function showCachedFor(email,p){
+  if(rawRows.length||!email||!p||p.v!==CACHE_VERSION||!p.me||String(p.me.email||'').toLowerCase()!==email||!Array.isArray(p.avail)||!p.rows||!p.rows.length)return false;
+  ME=p.me;showUser();AVAIL=p.avail;LOADED=new Set(p.loaded||[]);lastMsg={msg:p.msg,warn:p.warn};
+  rawRows=p.rows;menuSig=p.menuSig;finishBuild(p.msg,p.warn);presetLoadedMonths();
+  return true;
+}
+let sbClient=null;
+function sb(){
+  if(sbClient)return sbClient;
+  if(!window.supabase||!window.supabase.createClient)throw Error('the Supabase library has not loaded (internet connection needed)');
+  return sbClient=window.supabase.createClient(SUPABASE.url,SUPABASE.anonKey,{auth:{persistSession:true,autoRefreshToken:true,storageKey:'viewx-mm-auth'}});
+}
+// A downloaded copy carries both mappings inside it: they are permanent there, with no upload option.
+// With Supabase the mappings come from the database, so the file is locked the same way.
+const LOCKED=AUTHMODE||!!(builtinRef.category&&builtinRef.allocation);
+function applyLockedMode(){
+  if(!LOCKED)return;
+  // Category and Allocation are part of the code here, so their cards and buttons are removed entirely
+  ['category','allocation'].forEach(type=>$(type+'File').closest('.upload-card').remove());
+  $('bakeBtn').parentElement.remove();
+  $('srcSettings').remove();
+  if(SOURCE||AUTHMODE){applySourceMode();return}
+  // "Upload Data" becomes "Menu Mix Update": a single upload for the sales file
+  $('uploadArea').style.gridTemplateColumns='minmax(0,560px)';
+  const nav=document.querySelector('.navitem[data-view="upload"]');
+  nav.innerHTML='<span>↥</span>Menu Mix Update';
+  const card=$('menuFile').closest('.upload-card');
+  card.querySelector('h3').textContent='Menu Mix Update File';
+  card.querySelector('.upload-head p').textContent='Upload the latest Menu Mix sales file';
+  card.querySelector('.joinnote').textContent='Must include INVD_ITEM, INVD_STR_ID, QTY and AMOUNT. Category and store allocation are already built into this dashboard.';
+  TITLES.upload='Menu Mix Update';$('view-upload').dataset.title='Menu Mix Update';
+  SUBTITLES.upload='Upload the latest Menu Mix file to refresh the dashboard.';
+  $('pageTitle').textContent=TITLES.upload;$('pageSubtitle').textContent=SUBTITLES.upload;
+  $('resetBtn').textContent='Clear Menu Mix Data';
+}
+let globalFilters={},sizeFilters={};
+let currentSort={table:null,dir:1};
+let currentMetric='sales';
+let currentSizeGroup='hot';
+let activeView='upload';
+let idx=null;            // distinct values + lookup indexes, built once per dataset
+let gcache=null;         // filtered rows + groupings for the current global filter state
+const dirty=new Set();   // views whose content is stale; only the visible view is rendered
+
+const fmt=n=>Number(n||0).toLocaleString('en-US',{maximumFractionDigits:0}),money=n=>fmt(n),pct=n=>`${Number(n||0).toFixed(1)}%`,norm=v=>String(v??'').replace(/^﻿/,'').trim().toLowerCase().replace(/[\s_\-./()\\]+/g,'');
+function num(v){if(typeof v==='number')return Number.isFinite(v)?v:0;const n=Number(String(v??'').replace(/[,$\s]/g,''));return Number.isFinite(n)?n:0}
+function cleanCode(v){if(v===null||v===undefined)return '';let s=String(v).trim();if(/^\d+\.0+$/.test(s))s=s.replace(/\.0+$/,'');return s}
+function esc(v){return String(v??'').replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]))}
+function setMessage(t,warning=false){$('message').textContent=t;$('message').classList.toggle('warning',warning)}
+
+/* Header lookup is resolved ONCE per file (not per row): returns a fast accessor
+   that yields the first non-empty value among the matching columns. */
+function getter(sample,...names){
+  const wanted=new Set(names.map(norm));
+  const cols=Object.keys(sample||{}).filter(k=>wanted.has(norm(k)));
+  const ok=v=>v!==undefined&&v!==null&&(typeof v!=='string'||v.trim()!=='');
+  if(!cols.length)return ()=>'';
+  if(cols.length===1){const c=cols[0];return r=>{const v=r[c];return ok(v)?v:''}}
+  return r=>{for(let i=0;i<cols.length;i++){const v=r[cols[i]];if(ok(v))return v}return ''};
+}
+const K_ITEM=['INVD_ITEM','Item Code','ITEM_CODE','Item','Product Code','SKU','Item No','Item Number'];
+const K_STORE_ID=['INVD_STR_ID','STR_ID','Store ID','STORE_ID','Store Code','STORE_CODE','Store No','Store Number','Branch Code','Location Code'];
+const K_STORE_NAME=['STR_NAME','Store Name','STORE_NAME','Store','Branch Name','Location Name'];
+const K_MANAGER=['Area Manager','AreaManager','AM Name','AM_NAME','AM','Area Manager Name','AREA_MANAGER','AREA_MANAGER_NAME','Manager Name','Manager','AM Name/Code'];
+
+function readSheet(file){return new Promise((resolve,reject)=>{const reader=new FileReader();const isCsv=file.name.toLowerCase().endsWith('.csv');reader.onerror=()=>reject(Error('Could not read '+file.name));reader.onload=e=>{try{
+  // dense mode + skipping formulas/HTML/styles makes parsing noticeably faster and lighter
+  const wb=XLSX.read(e.target.result,{type:isCsv?'string':'array',cellDates:true,dense:true,cellFormula:false,cellHTML:false,cellStyles:false,sheets:0});
+  if(!wb.SheetNames.length)throw Error('No worksheet found in '+file.name);
+  resolve(XLSX.utils.sheet_to_json(wb.Sheets[wb.SheetNames[0]],{defval:'',raw:false}))}catch(err){reject(err)}};
+  if(isCsv)reader.readAsText(file);else reader.readAsArrayBuffer(file)})}
+
+const dateCache=new Map();
+function dateKey(v){
+  if(!v)return '';
+  if(v instanceof Date)return isNaN(v)?'':`${v.getFullYear()}-${String(v.getMonth()+1).padStart(2,'0')}-${String(v.getDate()).padStart(2,'0')}`;
+  const hit=dateCache.get(v); if(hit!==undefined)return hit;
+  let out,s=String(v).trim(),m;
+  if(/^\d{4}-\d{2}-\d{2}/.test(s))out=s.slice(0,10);
+  else if((m=s.match(/^(\d{1,2})[/-](\d{1,2})[/-](\d{4})$/))){let a=+m[1],b=+m[2],mm,dd;if(a>12){dd=a;mm=b}else{mm=a;dd=b}out=`${m[3]}-${String(mm).padStart(2,'0')}-${String(dd).padStart(2,'0')}`}
+  else{const d=new Date(s);out=isNaN(d)?'':`${d.getFullYear()}-${String(d.getMonth()+1).padStart(2,'0')}-${String(d.getDate()).padStart(2,'0')}`}
+  dateCache.set(v,out);return out;
+}
+
+/* Size-group classification (Hot=1, Cold=2, Joe Box=4), computed once per distinct product */
+const EXCLUDE_SIZES=['4 oz','6 oz','7 oz','8 oz'];
+const SG_BIT={hot:1,cold:2,joebox:4};
+function sizeGroupMask(cat,size,sub,prod){
+  if(!(cat||'').toLowerCase().includes('beverage'))return 0;
+  const s=(size||'').toLowerCase(),combined=s+' '+(sub||'').toLowerCase()+' '+(prod||'').toLowerCase();
+  const excluded=EXCLUDE_SIZES.some(ex=>s.includes(ex));
+  let mask=0;
+  if(!excluded&&combined.includes('hot'))mask|=1;
+  if(!excluded&&(combined.includes('cold')||combined.includes('ice')))mask|=2;
+  if(combined.includes('joe box')||combined.includes('joebox'))mask|=4;
+  return mask;
+}
+
+/* =========================================
+   INDEXEDDB STORAGE (files + parsed-row cache)
+   ========================================= */
+const DB_NAME='ViewX_DB',DB_VERSION=1,STORE_NAME='files',CACHE_KEY='parsed',CACHE_VERSION=3;let db=null;
+function initDB(){return new Promise((resolve,reject)=>{const req=indexedDB.open(DB_NAME,DB_VERSION);req.onupgradeneeded=e=>{const d=e.target.result;if(!d.objectStoreNames.contains(STORE_NAME))d.createObjectStore(STORE_NAME)};req.onsuccess=e=>{db=e.target.result;resolve()};req.onerror=e=>reject(e.target.error)})}
+function saveToDB(key,value){if(!db)return Promise.resolve();return new Promise((resolve,reject)=>{try{const tx=db.transaction(STORE_NAME,'readwrite');tx.objectStore(STORE_NAME).put(value,key);tx.oncomplete=()=>resolve();tx.onerror=e=>reject(e.target.error);tx.onabort=e=>reject(e.target.error)}catch(err){reject(err)}})}
+function getFromDB(key){if(!db)return Promise.resolve(null);return new Promise((resolve,reject)=>{const req=db.transaction(STORE_NAME,'readonly').objectStore(STORE_NAME).get(key);req.onsuccess=e=>resolve(e.target.result);req.onerror=e=>reject(e.target.error)})}
+function deleteFromDB(key){if(!db)return Promise.resolve();return new Promise(resolve=>{try{const tx=db.transaction(STORE_NAME,'readwrite');tx.objectStore(STORE_NAME).delete(key);tx.oncomplete=tx.onerror=tx.onabort=()=>resolve()}catch(e){resolve()}})}
+function clearDB(){if(!db)return;db.transaction(STORE_NAME,'readwrite').objectStore(STORE_NAME).clear()}
+/* =========================================
+   MENU MIX FROM SUPABASE STORAGE
+   ========================================= */
+const DEFAULT_SOURCE='https://nilxeuaurdxcsdplufgo.supabase.co/storage/v1/object/public/Menu%20Mix/Menu%20Mix.xlsx';
+// accepts a public object URL, or the Supabase dashboard link of a file (…/storage/files/buckets/<bucket>?preview=<file>)
+function normalizeSource(s){
+  s=String(s||'').trim();if(!s)return '';
+  const m=s.match(/supabase\.com\/dashboard\/project\/([a-z0-9]+)\/storage\/files\/buckets\/([^?#]+)\?(?:[^#]*&)?preview=([^&#]+)/i);
+  if(m){const dec=v=>decodeURIComponent(v.replace(/\+/g,' '));const path=dec(m[2]).split('/').map(encodeURIComponent).join('/');
+    return `https://${m[1]}.supabase.co/storage/v1/object/public/${path}/${dec(m[3]).split('/').map(encodeURIComponent).join('/')}`}
+  return /^https:\/\/[^\s]+$/i.test(s)?s:'';
+}
+function sourceLabel(url){const m=url.match(/\/object\/(?:public|sign|authenticated)\/([^?]+)/);return m?decodeURIComponent(m[1]):url}
+const mbStr=b=>(b/1048576).toFixed(1);
+function setSrcStatus(text,warn=false){const el=$('srcStatus');if(el){el.textContent=text;el.classList.toggle('warning',warn)}}
+let srcLoading=false;
+async function loadFromSource(){
+  if(!SOURCE||srcLoading)return;srcLoading=true;
+  const status=(state,text,warn)=>{setNavState(state,text);setSrcStatus(text,warn);setMessage(text,warn)};
+  try{
+    status('loading','Checking Supabase…');
+    const parsed=await getFromDB(CACHE_KEY).catch(()=>null);
+    const cacheOK=sig=>parsed&&parsed.v===CACHE_VERSION&&parsed.sig===refSig()&&parsed.rows&&parsed.rows.length&&(!sig||parsed.menuSig===sig);
+    let version='',modified='';
+    try{
+      const h=await fetch(SOURCE.url,{method:'HEAD',cache:'no-store'});
+      if(!h.ok)throw Error(h.status===400||h.status===404?'file not found in Supabase (is the bucket public and the file name right?)':'HTTP '+h.status);
+      modified=h.headers.get('last-modified')||'';
+      version=[h.headers.get('etag'),modified,h.headers.get('content-length')].join('|');
+    }catch(e){
+      // offline or blocked: keep / show the last data loaded in this browser, if any
+      if(!rawRows.length&&cacheOK('')){rawRows=parsed.rows;menuSig=parsed.menuSig||'';finishBuild(parsed.msg,parsed.warn)}
+      if(rawRows.length)status('error','Could not reach Supabase — showing the last loaded data. '+e.message,true);
+      else{status('error','Could not load Menu Mix from Supabase: '+e.message,true);showView('upload')}
+      return;
+    }
+    const when=modified?new Date(modified).toLocaleString():'unknown time',doneText=`Menu Mix loaded • file updated ${when}`;
+    if(rawRows.length&&menuSig===version){status('done',doneText);return}           // already showing this file
+    if(cacheOK(version)){rawRows=parsed.rows;menuSig=version;finishBuild(parsed.msg,parsed.warn);status('done',doneText);return} // same file as last time: no download
+    const res=await fetch(SOURCE.url,{cache:'no-store'});
+    if(!res.ok)throw Error('HTTP '+res.status);
+    const total=+res.headers.get('content-length')||0,chunks=[];let done=0,last=0;
+    if(res.body&&res.body.getReader){
+      const reader=res.body.getReader();
+      for(;;){const {done:end,value}=await reader.read();if(end)break;chunks.push(value);done+=value.length;
+        const now=performance.now();if(now-last>200){last=now;const mb=`${mbStr(done)}${total?' / '+mbStr(total):''} MB`;setNavState('loading',mb);setSrcStatus('Downloading Menu Mix from Supabase… '+mb)}}
+    }else chunks.push(new Uint8Array(await res.arrayBuffer()));
+    const name=SOURCE.label.split('/').pop()||'Menu Mix.xlsx';
+    files.menu=new File(chunks,name,{type:res.headers.get('content-type')||''});menuSig=version;
+    status('loading','Processing…');setSrcStatus(`Processing ${name} — this can take a minute…`);
+    await new Promise(r=>setTimeout(r,60)); // let the status paint before the heavy work
+    await buildDashboard();
+    if(rawRows.length&&menuSig===version)status('done',doneText);
+    else status('error',$('message').textContent||'Could not build the dashboard',true);
+  }catch(e){status('error','Could not load Menu Mix from Supabase: '+e.message,true);if(!rawRows.length)showView('upload');console.error(e)}
+  finally{srcLoading=false}
+}
+/* Downloaded copy with a Supabase source: no upload page at all. The first item in the top
+   bar is a "Menu Mix" status pill — it shows the download, turns into a tick when the data is
+   in, and refreshes from Supabase when clicked. The old upload page is only a loading/error
+   screen now, shown until the first data arrives. */
+function applySourceMode(){
+  const card=$('menuFile').closest('.upload-card');
+  card.querySelector('.upload-icon').textContent='☁';
+  card.querySelector('h3').textContent='Menu Mix';
+  card.querySelector('.upload-head p').textContent=AUTHMODE?'Loading your data from Supabase':`Loading from Supabase • ${SOURCE.label}`;
+  // no upload controls: hidden (not removed, other code still looks them up)
+  [card.querySelector('.dropzone'),card.querySelector('.joinnote'),$('uploadToolbar')].forEach(el=>el.classList.add('hidden'));
+  card.querySelector('.upload-head').insertAdjacentHTML('afterend','<div class="src-box"><div class="src-status" id="srcStatus">Waiting…</div></div>');
+  $('uploadArea').style.gridTemplateColumns='minmax(0,640px)';
+  TITLES.upload='Menu Mix';$('view-upload').dataset.title='Menu Mix';
+  // swap the nav item for a status pill (a fresh element, so it no longer opens the upload page)
+  const old=document.querySelector('.navitem[data-view="upload"]'),pill=document.createElement('button');
+  pill.type='button';pill.id='navMenuMix';pill.className='navitem src-pill loading';
+  old.replaceWith(pill);
+  pill.addEventListener('click',()=>AUTHMODE?startAuthed():loadFromSource());
+  setNavState('loading','Checking…');
+}
+function setNavState(state,detail=''){
+  const p=$('navMenuMix');if(!p)return;
+  p.classList.remove('loading','done','error');p.classList.add(state);
+  const icon=state==='done'?'<span class="tick">✓</span>':state==='error'?'<span class="warn">!</span>':'<span class="spin">⟳</span>';
+  p.innerHTML=`${icon}Menu Mix${state==='done'?'':`<small>${esc(detail)}</small>`}`;
+  p.title=state==='done'?`${detail}\nClick to refresh from Supabase`:state==='error'?`${detail}\nClick to try again`:detail;
+}
+
+/* =========================================
+   SIGN-IN AND ACCESS LEVELS (Supabase)
+   1. The person signs in; mm_me() says who they are and which stores they may see.
+   2. Admins only: files in the bucket that changed since the last copy are copied into the database.
+   3. Everyone: the mappings and each month of sales are read from the database. The database only
+      returns the person's own stores, so nothing else ever reaches this browser.
+   ========================================= */
+let ME=null,authLoading=false;
+const ROLE_LABEL={admin:'Admin',viewer:'Viewer',opmanager:'Operation Manager',area:'Area Manager',store:'Store'};
+const errText=e=>e&&e.message?e.message:String(e);
+const tick=(ms=40)=>new Promise(r=>setTimeout(r,ms));
+
+async function accessToken(){const {data}=await sb().auth.getSession();return data&&data.session?data.session.access_token:''}
+async function stHeaders(){return {apikey:SUPABASE.anonKey,Authorization:'Bearer '+await accessToken()}}
+const stBucket=()=>encodeURIComponent(SUPABASE.bucket);
+async function stErr(res,what){let m='';try{const j=await res.json();m=j.message||j.error||''}catch(e){}return `${what} (HTTP ${res.status}${m?': '+m:''})`}
+async function stList(){
+  const res=await fetch(`${SUPABASE.url}/storage/v1/object/list/${stBucket()}`,{method:'POST',cache:'no-store',
+    headers:{...await stHeaders(),'Content-Type':'application/json'},body:JSON.stringify({prefix:'',limit:1000,offset:0,sortBy:{column:'name',order:'asc'}})});
+  if(!res.ok)throw Error(await stErr(res,`could not read the "${SUPABASE.bucket}" bucket`));
+  return (await res.json()).filter(f=>f&&f.id); // entries without an id are folders
+}
+// exact name first, then the same name with any extension (e.g. Allocation.xlsx instead of .csv)
+function stFind(list,wanted){
+  const w=wanted.toLowerCase(),base=w.replace(/\.[^.]+$/,'');
+  return list.find(f=>f.name.toLowerCase()===w)||list.find(f=>f.name.toLowerCase().replace(/\.[^.]+$/,'')===base);
+}
+const stSig=f=>`${f.name}|${f.updated_at}|${f.metadata&&f.metadata.size}`;
+async function stDownload(f,onProgress){
+  const path=f.name.split('/').map(encodeURIComponent).join('/');
+  const res=await fetch(`${SUPABASE.url}/storage/v1/object/authenticated/${stBucket()}/${path}`,{headers:await stHeaders(),cache:'no-store'});
+  if(!res.ok)throw Error(await stErr(res,`could not download ${f.name}`));
+  const total=+res.headers.get('content-length')||(f.metadata&&f.metadata.size)||0,chunks=[];let done=0,last=0;
+  if(onProgress&&res.body&&res.body.getReader){
+    const reader=res.body.getReader();
+    for(;;){const {done:end,value}=await reader.read();if(end)break;chunks.push(value);done+=value.length;
+      const now=performance.now();if(now-last>250){last=now;onProgress(done,total)}}
+  }else chunks.push(new Uint8Array(await res.arrayBuffer()));
+  return new File(chunks,f.name,{type:res.headers.get('content-type')||''});
+}
+// Users file: email, name, role, stores ("72;112;…")
+function parseUsers(rows){
+  if(!rows.length)throw Error('the Users file is empty');
+  const s=rows[0],gE=getter(s,'email','e-mail','user','login'),gN=getter(s,'name','full name'),gR=getter(s,'role','level','access'),gS=getter(s,'stores','store','store ids','store id');
+  const out=[];
+  for(const r of rows){const e=String(gE(r)).trim().toLowerCase();if(!e.includes('@'))continue;
+    const stores=String(gS(r)).split(/[;,|\s]+/).map(v=>cleanCode(v).replace(/^0+(?=\d)/,'')).filter(Boolean);
+    out.push([e,String(gN(r)).trim(),String(gR(r)).trim().toLowerCase(),stores.join(';')])}
+  if(!out.length)throw Error('the Users file has no rows with an email');
+  return out;
+}
+
+/* ADMIN: copy files that changed in the bucket into the database */
+/* Compare the file's per-day totals (rows, qty, amount) with the database and keep only days
+   that are new or different. If the database check is missing or fails, every row is kept. */
+async function changedDays(c,rows){
+  const all=()=>({rows,days:new Set(rows.map(r=>r.dob)).size});
+  let data;
+  try{const res=await c.rpc('mm_day_sums');if(res.error)throw res.error;data=res.data}
+  catch(e){console.warn('Day check not available, saving the whole file',e);return all()}
+  if(!Array.isArray(data))return all();
+  const dbDays=new Map(data.map(x=>[String(x[0]).slice(0,10),x]));
+  const fileDays=new Map();
+  for(const r of rows){let d=fileDays.get(r.dob);if(!d)fileDays.set(r.dob,d={n:0,q:0,a:0});d.n++;d.q+=+r.qty||0;d.a+=+r.amount||0}
+  const keep=new Set();
+  fileDays.forEach((v,d)=>{const x=dbDays.get(d);
+    if(!x||+x[1]!==v.n||Math.abs(+x[2]-v.q)>0.01||Math.abs(+x[3]-v.a)>0.5)keep.add(d)});
+  return {rows:rows.filter(r=>keep.has(r.dob)),days:keep.size};
+}
+// ver: mm_version already read by the sign-in step; listP: the bucket list if it was started early.
+// Returns true when something was copied (the version then has to be read again).
+async function adminSync(status,ver,listP){
+  const c=sb(),F=SUPABASE.files;let changed=false;
+  if(!ver){const {data,error}=await c.rpc('mm_version');if(error)throw error;ver=data}
+  let list=listP?await listP:null;if(list instanceof Error)throw list;if(!list)list=await stList();
+  const have=ver&&ver.files||{},find=k=>stFind(list,F[k]);
+  // Users are managed in the Sales dashboard now, so only the two mapping files are copied
+  for(const [k,fn,label] of [['category','mm_replace_category','Category mapping'],['allocation','mm_replace_allocation','Store allocation']]){
+    const f=find(k);if(!f||have[k]===stSig(f))continue;
+    status('loading',`Updating ${label}…`);
+    const file=await stDownload(f),sheet=await readSheet(file);
+    const rows=parseRef(k,sheet,file.name).rows;
+    const {error:e}=await c.rpc(fn,{p_rows:rows,p_sig:stSig(f)});if(e)throw Error(`${label}: ${e.message}`);
+    changed=true;
+  }
+  const fm=find('menu');
+  if(fm&&have.menu!==stSig(fm)){
+    const mf=await stDownload(fm,(d,t)=>status('loading',`Downloading new Menu Mix ${mbStr(d)}${t?' / '+mbStr(t):''} MB`));
+    status('loading','Reading the new Menu Mix file…');await tick(60);
+    const rows=[];
+    for(const r of menuRecords(await readSheet(mf))){
+      if(!r.date||!r.item||!r.storeId)continue;
+      rows.push({dob:r.date,str_id:r.storeId,str_name:r.storeName||null,item:r.item,item_name:r.name||r.long||null,qty:r.qty,amount:r.sales});
+    }
+    if(!rows.length)throw Error('the Menu Mix file has no rows with a date, item and store');
+    // only days that are new or different from the database are saved (all rows if the check is not available)
+    status('loading','Checking which days changed…');
+    const toSave=await changedDays(c,rows);
+    let res=await c.rpc('mm_stage_clear');if(res.error)throw res.error;
+    const BATCH=5000,batches=[];
+    for(let i=0;i<toSave.rows.length;i+=BATCH)batches.push(toSave.rows.slice(i,i+BATCH));
+    let next=0,done=0;
+    const worker=async()=>{while(next<batches.length){const b=batches[next++];
+      for(let tries=0;;){const {error:e}=await c.from('mm_stage').insert(b);if(!e)break;if(++tries>=3)throw e;await tick(1500*tries)}
+      done++;status('loading',`Saving ${fmt(toSave.days)} changed day${toSave.days===1?'':'s'} to the database ${Math.round(done/batches.length*100)}%`)}};
+    if(batches.length)status('loading',`Saving ${fmt(toSave.days)} changed day${toSave.days===1?'':'s'} to the database 0%`);
+    await Promise.all([0,1,2,3].map(worker)); // four batches at a time
+    status('loading','Finishing the Menu Mix update…');
+    res=await c.rpc('mm_commit',{p_file:fm.name,p_sig:stSig(fm)});if(res.error)throw res.error;
+    changed=true;
+  }
+  return changed;
+}
+
+/* EVERYONE: read this person's data from the database.
+   Only the latest INITIAL_MONTHS months load at sign-in; any other month loads when it is picked
+   in a Year / Month filter, a Comparison date or the 2-month popup (see ensureMonths). */
+const INITIAL_MONTHS=2;
+let AVAIL=[],LOADED=new Set(),refVer='',monthLoading=null,lastMsg={msg:'',warn:false};
+const ymShort=ym=>`${MONTHS[+ym.slice(5,7)-1].slice(0,3)} ${ym.slice(0,4)}`;
+const loadedText=()=>{const l=AVAIL.filter(ym=>LOADED.has(ym));return !l.length?'':l.length===AVAIL.length?'all months':l.length<=3?l.map(ymShort).join(', '):`${l.length} of ${AVAIL.length} months`};
+async function loadRef(c){
+  if(refReady()&&ref.category.updated===refVer)return;
+  const {data:rf,error}=await c.rpc('mm_reference');if(error)throw error;
+  const clean=r=>r.map(v=>v==null?'':String(v));
+  ref.category=rf&&rf.category.length?{rows:rf.category.map(r=>{r=clean(r);r[3]=r[3].trim()||'Unmapped';return r}),name:'Supabase',updated:refVer}:null;
+  ref.allocation=rf&&rf.allocation.length?{rows:rf.allocation.map(clean),name:'Supabase',updated:refVer}:null;
+  if(!ref.category)throw Error('the Category mapping is not in the database yet'+(ME.role==='admin'?' (put Category.xlsx in the bucket)':' — ask the admin'));
+  if(!ref.allocation)throw Error(ME.all?'the Store allocation is not in the database yet':'none of your stores are in the Store allocation — ask the admin');
+}
+async function fetchMonthRecs(c,ym){
+  const {data,error}=await c.rpc('mm_sales_month',{p_ym:ym});if(error)throw Error(`${ym}: ${error.message}`);
+  const S=data.stores||{},I=data.items||{},rows=data.rows||[],out=new Array(rows.length);
+  for(let i=0;i<rows.length;i++){const [d,sid,it,q,a]=rows[i],nm=I[it]||'';
+    out[i]={item:String(it),storeId:String(sid),storeName:S[sid]||'',date:`${ym}-${String(d).padStart(2,'0')}`,qty:+q||0,sales:+a||0,name:nm,long:nm}}
+  return out;
+}
+async function fetchMonths(c,list,onDone){
+  const recs=[];let next=0,done=0;
+  await Promise.all([0,1,2].map(async()=>{while(next<list.length){const r=await fetchMonthRecs(c,list[next++]);for(let i=0;i<r.length;i++)recs.push(r[i]);done++;if(onDone)onDone(done)}}));
+  return recs;
+}
+function saveRowCache(){
+  setTimeout(()=>saveToDB(CACHE_KEY,{v:CACHE_VERSION,sig:refSig(),menuSig,rows:rawRows,msg:lastMsg.msg,warn:lastMsg.warn,loaded:[...LOADED],avail:AVAIL.slice(),me:ME}).catch(err=>console.warn('Row cache not saved',err)),300);
+}
+// tick the loaded months in the Year / Month filters (main dashboard and Size Mix)
+function presetLoadedMonths(){
+  const l=AVAIL.filter(ym=>LOADED.has(ym));if(!l.length||l.length===AVAIL.length)return;
+  const ys=[...new Set(l.map(ym=>ym.slice(0,4)))],ms=[...new Set(l.map(ym=>MONTHS[+ym.slice(5,7)-1]))];
+  ['f','sf'].forEach(p=>{setSelectedMulti(p+'Year',ys);setSelectedMulti(p+'Month',ms)});
+  applyFilters();
+}
+async function loadMyData(status,parsed,ver){
+  const c=sb();
+  if(!ver){const {data,error:e1}=await c.rpc('mm_version');if(e1)throw e1;ver=data}
+  const salesV=String(ver.sales_version),refV=String(ver.ref_version),userKey=ME.email+'|'+ME.role+'|'+(ME.stores||[]).join(';');
+  const sig=`${salesV}|${refV}|${userKey}`;
+  refVer=refV;AVAIL=[...(ver.months||[])].map(String).sort();
+  const doneText=()=>`Menu Mix loaded • showing ${loadedText()} • data updated ${new Date(ver.sales_version).toLocaleString()}`;
+  if(rawRows.length&&menuSig===sig)return doneText();                                               // already showing this
+  if(parsed&&parsed.v===CACHE_VERSION&&parsed.menuSig===sig&&parsed.rows&&parsed.rows.length){        // same data, same person
+    LOADED=new Set(parsed.loaded||AVAIL);lastMsg={msg:parsed.msg,warn:parsed.warn};
+    rawRows=parsed.rows;menuSig=sig;finishBuild(parsed.msg,parsed.warn);presetLoadedMonths();
+    if(!parsed.me||!parsed.avail||String(parsed.avail)!==String(AVAIL))saveRowCache(); // add what the fast open needs
+    return doneText()}
+  if(!AVAIL.length)throw Error(ME.all||(ME.stores||[]).length?'there is no Menu Mix data for your stores yet':'no stores are assigned to your account yet — ask the admin');
+  const first=AVAIL.slice(-INITIAL_MONTHS);
+  status('loading',`Loading ${first.map(ymShort).join(' and ')}`);
+  const recs=(await Promise.all([fetchMonths(c,first),loadRef(c)]))[0]; // months and mappings at the same time
+  status('loading','Processing…');await tick(30);
+  const {rows,msg,warn}=joinRecords(recs);
+  // data already on screen (last loaded copy) with the same months: refresh it keeping the filters as they are
+  const keep=rawRows.length&&LOADED.size===first.length&&first.every(ym=>LOADED.has(ym));
+  LOADED=new Set(first);lastMsg={msg,warn};
+  rawRows=rows;menuSig=sig;
+  if(keep){rebuildKeepFilters();setMessage(msg,warn)}else{finishBuild(msg,warn);presetLoadedMonths()}
+  saveRowCache();
+  return doneText();
+}
+/* Load months that are not in the browser yet, then refresh every view keeping the filters as they are */
+async function ensureMonths(yms){
+  while(monthLoading)await monthLoading.catch(()=>{});
+  const need=[...new Set(yms)].filter(ym=>AVAIL.includes(ym)&&!LOADED.has(ym)).sort();
+  if(!need.length||!rawRows.length)return false;
+  const p=(async()=>{
+    const c=sb(),label=need.length<=3?need.map(ymShort).join(', '):`${need.length} months`;
+    setNavState('loading',`Loading ${label}…`);
+    try{
+      await loadRef(c);
+      const recs=await fetchMonths(c,need,d=>setNavState('loading',`Loading ${label}… ${d}/${need.length}`));
+      const {rows}=joinRecords(recs);
+      for(let i=0;i<rows.length;i++)rawRows.push(rows[i]);
+      need.forEach(ym=>LOADED.add(ym));
+      rebuildKeepFilters();saveRowCache();
+      setNavState('done',`Menu Mix loaded • showing ${loadedText()}`);
+    }catch(e){console.error(e);setNavState('error','Could not load '+label+': '+errText(e));throw e}
+  })();
+  monthLoading=p;
+  try{await p}finally{monthLoading=null}
+  return true;
+}
+function rebuildKeepFilters(){
+  const sel={};MS_IDS.forEach(id=>{sel[id]=getSelectedMulti(id)});
+  const vals={};['fFrom','fTo','sfFrom','sfTo','aFrom','aTo','bFrom','bTo'].forEach(id=>{vals[id]=$(id).value});
+  buildIndex();populateFilters();
+  MS_IDS.forEach(id=>{if(sel[id].length)setSelectedMulti(id,sel[id])});
+  Object.keys(vals).forEach(id=>{$(id).value=vals[id]});
+  gcache=null;applyFilters();
+}
+// months a Year / Month filter asks for (nothing ticked means "All", so every month)
+function monthsForFilter(prefix){
+  const ys=getSelectedMulti(prefix+'Year').map(Number),ms=getSelectedMulti(prefix+'Month').map(l=>MONTHS.indexOf(l)+1);
+  return AVAIL.filter(ym=>(!ys.length||ys.includes(+ym.slice(0,4)))&&(!ms.length||ms.includes(+ym.slice(5,7))));
+}
+const monthsInRange=(from,to)=>AVAIL.filter(ym=>(!to||ym+'-01'<=to)&&(!from||ym+'-31'>=from));
+
+async function startAuthed(){
+  if(authLoading)return;authLoading=true;
+  const status=(state,text,warn)=>{setNavState(state,text);setSrcStatus(text,warn);setMessage(text,warn)};
+  let parsed=null,syncProblem='',fromCache=false,verified=false,laterSwap='';
+  try{
+    status('loading','Signing in…');
+    const cacheP=getFromDB(CACHE_KEY).catch(()=>null);
+    if(SHARED){
+      status('loading','Signing in with the Sales dashboard…');const tok=await salesTokenFromParent();
+      fromCache=showCachedFor(tokenEmail(tok),await cacheP);
+      if(fromCache)status('loading','Checking for new data…');
+      const reuse=await reuseMenuMixSession(tok);
+      if(!reuse)await exchangeSalesToken(tok);else if(reuse==='stale')laterSwap=tok;
+    }
+    // who this is, the data version and (for an admin) the bucket list, all at the same time
+    const c=sb(),listP=fromCache&&ME&&ME.role==='admin'?stList().catch(e=>e instanceof Error?e:Error(errText(e))):null;
+    const [meR,verR]=await Promise.all([c.rpc('mm_me'),c.rpc('mm_version')]);
+    if(meR.error)throw meR.error;if(verR.error)throw verR.error;
+    const me=meR.data;let ver=verR.data;
+    ME={...me,stores:me.stores||[]};verified=true;showUser();
+    parsed=await cacheP;
+    if(parsed&&parsed.menuSig&&!String(parsed.menuSig).includes('|'+ME.email+'|')){await deleteFromDB(CACHE_KEY);parsed=null} // never show one person's cache to another
+    if(ME.role==='admin'){
+      try{if(await adminSync(status,ver,listP))ver=null}catch(e){console.error(e);syncProblem='Could not copy the new files from the bucket: '+errText(e)}
+    }
+    const doneText=await loadMyData(status,parsed,ver);
+    if(syncProblem)status('error',syncProblem+' Showing the data already in the database.',true);
+    else status('done',doneText);
+    if(laterSwap)setTimeout(()=>refreshSsoLater(laterSwap),1500);
+  }catch(e){
+    const m=errText(e);console.error(e);
+    if(fromCache&&!verified){ // the last loaded copy was on screen but the sign-in did not go through: take it off
+      ME=null;rawRows=[];menuSig='';$('dashboard').classList.add('hidden');$('userBox').classList.add('hidden');showView('upload')}
+    if(/JWT|session|sign in|Sales dashboard|no active access/i.test(m)&&!ME){
+      if(SHARED){status('error',m,true);showView('upload');return}
+      showLogin('Sign in with your Sales dashboard email and password.');return}
+    if(rawRows.length)status('error','Showing the last loaded data — '+m,true);
+    else{status('error','Could not load: '+m,true);showView('upload')}
+  }finally{authLoading=false}
+}
+
+/* sign-in screen, user box, sign out, change password */
+function showLogin(note=''){
+  $('loginModal').classList.remove('hidden');$('loginErr').textContent=note;
+  setTimeout(()=>$(($('loginEmail').value?'loginPass':'loginEmail')).focus(),50);
+}
+function showUser(){
+  $('userBox').classList.remove('hidden');
+  $('userName').textContent=ME.name||ME.email;
+  const n=(ME.stores||[]).length;
+  $('userRole').textContent=(ROLE_LABEL[ME.role]||ME.role)+(ME.all?' • all stores':` • ${n} store${n===1?'':'s'}`);
+  $('userBox').title=ME.email;
+  // Passwords belong to the Sales dashboard now; inside it, signing out is done there too
+  $('pwChangeBtn').classList.add('hidden');if(SHARED)$('signOutBtn').classList.add('hidden');
+  $('delMonthBtn').classList.toggle('hidden',ME.role!=='admin');
+}
+$('loginForm').addEventListener('submit',async e=>{
+  e.preventDefault();const btn=$('loginBtn');btn.disabled=true;$('loginErr').textContent='';
+  try{
+    // Sign in with the Sales dashboard account, then swap it for a Menu Mix session
+    const sales=window.supabase.createClient(SALES.url,SALES.anonKey,{auth:{persistSession:false,autoRefreshToken:false,storageKey:'viewx-mm-sales-signin'}});
+    const {data,error}=await sales.auth.signInWithPassword({email:$('loginEmail').value.trim(),password:$('loginPass').value});
+    if(error)throw error;
+    await exchangeSalesToken(data.session.access_token);
+    $('loginPass').value='';$('loginModal').classList.add('hidden');
+    startAuthed();
+  }catch(err){$('loginErr').textContent=/invalid login/i.test(errText(err))?'Wrong email or password.':'Could not sign in: '+errText(err)}
+  finally{btn.disabled=false}
+});
+$('signOutBtn').addEventListener('click',async()=>{
+  try{await deleteFromDB(CACHE_KEY)}catch(e){}
+  try{await sb().auth.signOut()}catch(e){}
+  location.reload();
+});
+$('pwChangeBtn').addEventListener('click',()=>{$('cpNew').value='';$('cpNew2').value='';$('cpErr').textContent='';$('cpModal').classList.remove('hidden');$('cpNew').focus()});
+$('cpCancel').addEventListener('click',()=>$('cpModal').classList.add('hidden'));
+$('cpForm').addEventListener('submit',async e=>{
+  e.preventDefault();const a=$('cpNew').value,b=$('cpNew2').value;
+  if(a.length<8){$('cpErr').textContent='Use at least 8 characters.';return}
+  if(a!==b){$('cpErr').textContent='The two passwords are not the same.';return}
+  try{const {error}=await sb().auth.updateUser({password:a});if(error)throw error;
+    $('cpNew').value='';$('cpNew2').value='';$('cpModal').classList.add('hidden');alert('Password changed.')}
+  catch(err){$('cpErr').textContent='Could not change it: '+errText(err)}
+});
+/* ADMIN: delete one month of Menu Mix sales (mm_delete_month checks the admin role in the database) */
+$('delMonthBtn').addEventListener('click',async()=>{
+  const sel=$('delMonth');$('delConfirm').value='';$('delErr').textContent='';$('delErr').style.color='';$('delGo').disabled=false;
+  sel.innerHTML=AVAIL.length?[...AVAIL].reverse().map(ym=>`<option value="${ym}">${ymLabel(ym)}</option>`).join(''):'<option value="">No months in the database</option>';
+  $('delModal').classList.remove('hidden');
+  try{ // row counts per month, when available
+    const {data,error}=await sb().rpc('mm_day_sums');
+    if(!error&&Array.isArray(data)){const n=new Map();data.forEach(x=>{const ym=String(x[0]).slice(0,7);n.set(ym,(n.get(ym)||0)+(+x[1]||0))});
+      [...sel.options].forEach(o=>{if(n.has(o.value))o.textContent=`${ymLabel(o.value)} — ${fmt(n.get(o.value))} rows`})}
+  }catch(e){}
+});
+$('delCancel').addEventListener('click',()=>$('delModal').classList.add('hidden'));
+$('delForm').addEventListener('submit',async e=>{
+  e.preventDefault();const ym=$('delMonth').value,err=$('delErr');if(!ym)return;
+  if($('delConfirm').value.trim().toUpperCase()!=='DELETE'){err.style.color='';err.textContent='Type DELETE to confirm.';return}
+  const btn=$('delGo');btn.disabled=true;err.style.color='';err.textContent=`Deleting ${ymLabel(ym)}…`;
+  try{
+    const {data,error}=await sb().rpc('mm_delete_month',{p_ym:ym});if(error)throw error;
+    await deleteFromDB(CACHE_KEY);
+    err.style.color='#11866d';err.textContent=`Deleted ${fmt(data&&data.deleted)} rows of ${ymLabel(ym)}. Reloading…`;
+    setTimeout(()=>location.reload(),1500);
+  }catch(x){err.style.color='';err.textContent='Could not delete: '+errText(x);btn.disabled=false}
+});
+async function authBoot(){
+  if(SHARED){startAuthed();return} // inside the Sales dashboard: its sign-in is used, no login form
+  try{
+    const {data}=await sb().auth.getSession();
+    if(data&&data.session)startAuthed();else showLogin();
+  }catch(e){setNavState('error',errText(e));setSrcStatus(errText(e),true)}
+}
+
+async function restoreFiles(){
+  try{
+    await initDB();
+    const [menu,parsed,savedCat,savedAlloc,oldCat,oldAlloc]=await Promise.all([getFromDB('menu'),getFromDB(CACHE_KEY),getFromDB(REF_KEYS.category),getFromDB(REF_KEYS.allocation),getFromDB('category'),getFromDB('allocation')]);
+    // newest of: built into this file / updated in this browser
+    if(!LOCKED){ref.category=pickRef(builtinRef.category,savedCat); ref.allocation=pickRef(builtinRef.allocation,savedAlloc)}
+    // one-time carry-over of files uploaded with the previous version of this dashboard
+    for(const [type,f] of [['category',oldCat],['allocation',oldAlloc]]){
+      if(!ref[type]&&f&&f.name){try{ref[type]=parseRef(type,await readSheet(f),f.name);await saveToDB(REF_KEYS[type],ref[type])}catch(err){console.warn('Could not carry over '+type+' file',err)}}
+      if(f)deleteFromDB(type);
+    }
+    if(AUTHMODE){await authBoot();return}
+    if(LOCKED&&SOURCE){refreshRefStatus();await loadFromSource();return}
+    if(menu){files.menu=menu;$('menuName').textContent=menu.name+' (Restored)'}
+    $('buildBtn').disabled=!canBuild();
+    if(canBuild()&&parsed&&parsed.v===CACHE_VERSION&&parsed.sig===refSig()&&parsed.rows&&parsed.rows.length){
+      // Fast path: reuse already-processed rows instead of re-parsing the Excel file
+      rawRows=parsed.rows; finishBuild(parsed.msg,parsed.warn);
+    }else if(canBuild()){setMessage('Restored previous Menu Mix file. Building dashboard…');$('buildBtn').click()}
+    else setMessage(idleMessage(),!refReady());
+  }catch(e){console.error('Failed to restore files',e)}
+  finally{refreshRefStatus()}
+}
+
+/* =========================================
+   REFERENCE DATA (category mapping + store allocation)
+   ========================================= */
+const idleMessage=()=>refReady()?'Upload the Menu Mix file to begin.':'Mappings are not set yet: upload the Category and Allocation files once, then save them into the dashboard file.';
+function parseRef(type,rows,name){
+  const label=type==='category'?'Category':'Allocation';
+  if(!rows.length)throw Error(label+' file has no readable data rows.');
+  const s=rows[0],heads=Object.keys(s).map(norm),has=names=>names.some(n=>heads.includes(norm(n))),seen=new Set(),out=[];
+  if(type==='category'){
+    if(!has(K_ITEM))throw Error('Category file: could not find the item code column (INVD_ITEM).');
+    if(!has(['Category','Product Category']))throw Error('Category file: could not find a Category column.');
+    const cItem=getter(s,...K_ITEM),cCat=getter(s,'Category','Product Category'),cSub=getter(s,'Sub Category','SubCategory','Subcategory'),cSize=getter(s,'Size','Product Size'),cName=getter(s,'MI_LONGNAME','Item Name','Product Name'),cLong=getter(s,'MI_LONGNAME');
+    for(const r of rows){const key=cleanCode(cItem(r));if(!key||seen.has(key))continue;seen.add(key);
+      out.push([key,String(cCat(r)),String(cSub(r)),String(cSize(r)).trim()||'Unmapped',String(cName(r)),String(cLong(r))])}
+  }else{
+    if(!has(K_STORE_ID))throw Error('Allocation file: could not find the store ID column (INVD_STR_ID).');
+    if(!has(K_MANAGER))throw Error('Allocation file: could not find an Area Manager column.');
+    const aId=getter(s,...K_STORE_ID),aMgr=getter(s,...K_MANAGER),aName=getter(s,...K_STORE_NAME);
+    for(const r of rows){const key=cleanCode(aId(r));if(!key||seen.has(key))continue;seen.add(key);
+      out.push([key,String(aMgr(r)||''),String(aName(r)||'')])}
+  }
+  if(!out.length)throw Error(label+' file has no usable rows.');
+  return {rows:out,name,updated:new Date().toISOString()};
+}
+function refreshRefStatus(){
+  if(LOCKED){$('buildBtn').disabled=!canBuild();return} // mapping cards don't exist in a downloaded copy
+  [['category','items'],['allocation','stores']].forEach(([type,unit])=>{
+    const r=ref[type],el=$(type+'Name');
+    if(!r){el.textContent='Not set yet — upload this file once';el.style.color='#c14444';return}
+    el.style.color='';
+    el.textContent=`${LOCKED?'✔ Permanently added':r===builtinRef[type]?'Built in':'Updated in this browser'}: ${fmt(r.rows.length)} ${unit} • ${r.name||'file'} • ${String(r.updated).slice(0,10)}`;
+  });
+  const pending=['category','allocation'].some(t=>ref[t]&&ref[t]!==builtinRef[t]);
+  $('bakeBtn').disabled=!refReady();
+  $('revertBtn').disabled=!pending;
+  $('refNote').textContent=!refReady()?'':pending?'Mapping changes are remembered in this browser only. Click "Save mappings into dashboard file" and use the downloaded file from now on to make them permanent.':'Mappings are built into this file. Upload a Category or Allocation file only when something changes.';
+  $('buildBtn').disabled=!canBuild();
+}
+async function updateRef(type,file){
+  try{
+    setMessage(`Reading ${file.name}…`);
+    await new Promise(r=>setTimeout(r,30));
+    ref[type]=parseRef(type,await readSheet(file),file.name);
+    try{await deleteFromDB(CACHE_KEY);await saveToDB(REF_KEYS[type],ref[type])}catch(err){console.warn('Could not remember mapping',err)}
+    refreshRefStatus();
+    if(canBuild())$('buildBtn').click();
+    else setMessage(refReady()?`${type==='category'?'Category mapping':'Store allocation'} updated. Upload the Menu Mix file to begin.`:idleMessage(),!refReady());
+  }catch(e){setMessage('Could not update mapping: '+e.message,true);console.error(e)}
+  finally{$(type+'File').value=''}
+}
+/* Password gate for anything that changes or saves the mappings.
+   Only a SHA-256 fingerprint of the password is kept here, not the password itself.
+   Once unlocked it stays unlocked until the page is reloaded. */
+const PW_HASH='9c10e2389afcdd497841733ed4134647c29413c76c9f59c74d0805ce19e47d0e';
+let unlocked=false,pwResolve=null;
+async function sha256(text){const buf=await crypto.subtle.digest('SHA-256',new TextEncoder().encode(text));return [...new Uint8Array(buf)].map(b=>b.toString(16).padStart(2,'0')).join('')}
+function requirePassword(){
+  if(unlocked)return Promise.resolve(true);
+  if(pwResolve)pwResolve(false);
+  return new Promise(resolve=>{pwResolve=resolve;$('pwInput').value='';$('pwErr').textContent='';$('pwModal').classList.remove('hidden');$('pwInput').focus()});
+}
+function closePassword(ok){$('pwModal').classList.add('hidden');$('pwInput').value='';const r=pwResolve;pwResolve=null;if(r)r(ok)}
+$('pwForm').addEventListener('submit',async e=>{
+  e.preventDefault();
+  try{
+    if(await sha256($('pwInput').value)===PW_HASH){unlocked=true;closePassword(true)}
+    else{$('pwErr').textContent='Wrong password. Try again.';$('pwInput').select()}
+  }catch(err){$('pwErr').textContent='Password check is not available in this browser.'}
+});
+$('pwCancel').addEventListener('click',()=>closePassword(false));
+document.addEventListener('keydown',e=>{if(e.key==='Escape'&&!$('pwModal').classList.contains('hidden'))closePassword(false)});
+
+['category','allocation'].forEach(type=>{
+  const input=$(type+'File');
+  // ask for the password before the file picker opens
+  input.addEventListener('click',e=>{if(LOCKED){e.preventDefault();return}if(unlocked)return;e.preventDefault();requirePassword().then(ok=>{if(ok)input.click()})});
+  input.addEventListener('change',e=>{const f=e.target.files?.[0];if(!f)return;if(LOCKED||!unlocked){input.value='';return}updateRef(type,f)});
+});
+
+$('bakeBtn').addEventListener('click',async()=>{
+  if(!refReady()||!await requirePassword())return;
+  const open='<scr'+'ipt id="embeddedRef" type="application/json">',close='</scr'+'ipt>';
+  const i=PRISTINE.indexOf(open),j=i<0?-1:PRISTINE.indexOf(close,i);
+  if(i<0||j<0){setMessage('Could not prepare the dashboard file.',true);return}
+  const srcRaw=$('srcUrl').value.trim(),srcUrl=normalizeSource(srcRaw);
+  if(srcRaw&&!srcUrl){setMessage('The Supabase file link is not recognised. Paste the public file URL or the Supabase dashboard link of the file.',true);return}
+  const source=srcUrl?{url:srcUrl,label:sourceLabel(srcUrl)}:null;
+  const json=JSON.stringify({category:ref.category,allocation:ref.allocation,source}).replace(/</g,'\\u003c');
+  const blob=new Blob([PRISTINE.slice(0,i+open.length),json,PRISTINE.slice(j)],{type:'text/html;charset=utf-8'}),url=URL.createObjectURL(blob),a=document.createElement('a');
+  a.href=url;a.download='viewx-dashboard.html';a.click();
+  setTimeout(()=>URL.revokeObjectURL(url),1000);
+  setMessage(`Downloaded viewx-dashboard.html with the current mappings built in${source?` and Menu Mix loading from Supabase (${source.label})`:''}. Replace your old dashboard file with it.`);
+});
+
+// master file: the Supabase link to write into the downloaded copy (remembered in this browser)
+if($('srcUrl')){
+  let saved=null;try{saved=localStorage.getItem('viewxSourceUrl')}catch(e){}
+  $('srcUrl').value=saved!==null?saved:DEFAULT_SOURCE;
+  const check=()=>{const raw=$('srcUrl').value.trim(),u=normalizeSource(raw);
+    $('srcHint').textContent=!raw?'Empty: the downloaded file will ask for the Menu Mix file to be uploaded by hand.':u?`The downloaded file will load: ${sourceLabel(u)}  (${u})`:'Not recognised — paste the public file URL or the Supabase dashboard link of the file.';
+    $('srcHint').classList.toggle('warning',!!raw&&!u)};
+  $('srcUrl').addEventListener('input',()=>{try{localStorage.setItem('viewxSourceUrl',$('srcUrl').value)}catch(e){}check()});
+  check();
+}
+
+$('revertBtn').addEventListener('click',async()=>{
+  if(!await requirePassword())return;
+  ref={category:builtinRef.category,allocation:builtinRef.allocation};
+  await Promise.all([deleteFromDB(REF_KEYS.category),deleteFromDB(REF_KEYS.allocation),deleteFromDB(CACHE_KEY)]);
+  refreshRefStatus();
+  if(canBuild())$('buildBtn').click();else setMessage(idleMessage(),!refReady());
+});
+
+/* =========================================
+   FILE INPUTS & BUILD
+   ========================================= */
+$('menuFile').addEventListener('change',async e=>{
+  files.menu=e.target.files?.[0]||null; $('menuName').textContent=files.menu?.name||'No file selected';
+  menuSig=files.menu?`manual|${files.menu.name}|${files.menu.size}|${files.menu.lastModified}`:'';
+  $('buildBtn').disabled=!canBuild();
+  setMessage(canBuild()?'Menu Mix file selected. Click Build Dashboard.':idleMessage(),!!files.menu&&!refReady());
+  try{await deleteFromDB(CACHE_KEY); if(files.menu)await saveToDB('menu',files.menu)}catch(err){console.warn('Could not store file',err)}
+});
+
+$('buildBtn').addEventListener('click',()=>buildDashboard());
+/* Menu Mix sheet rows -> plain sales records (the same shape the Supabase database returns) */
+function menuRecords(menu){
+  if(!menu.length)throw Error('The Menu Mix file has no readable data rows. Check that the first worksheet contains headers in the first row.');
+  const sample=menu[0],heads=Object.keys(sample).map(norm);
+  if(!heads.includes('invditem'))throw Error('Menu Mix: could not find INVD_ITEM header. Check the first row of the worksheet for column headers.');
+  if(!heads.includes('invdstrid'))throw Error('Menu Mix: could not find INVD_STR_ID header.');
+  if(!heads.some(k=>['amount','sales','netsales','totalamount'].includes(k)))throw Error('Menu Mix: could not find AMOUNT/Sales column.');
+  const mItem=getter(sample,...K_ITEM),mStore=getter(sample,...K_STORE_ID),mStoreName=getter(sample,...K_STORE_NAME),
+    mDate=getter(sample,'INVD_DOB','Date','Business Date','INVD_DATE','Transaction Date'),
+    mQty=getter(sample,'QTY','Quantity','Qty Sold','Units'),mSales=getter(sample,'AMOUNT','Sales','Net Sales','Total Amount','NET_AMOUNT'),
+    mName=getter(sample,'MI_LONGNAME','Item Name','Product Name','Description','Item Description'),mLong=getter(sample,'MI_LONGNAME');
+  const out=new Array(menu.length);
+  for(let i=0;i<menu.length;i++){const m=menu[i];
+    out[i]={item:cleanCode(mItem(m)),storeId:cleanCode(mStore(m)),storeName:String(mStoreName(m)||''),date:dateKey(mDate(m)),
+      qty:num(mQty(m)),sales:num(mSales(m)),name:String(mName(m)||''),long:String(mLong(m)||'')}}
+  return out;
+}
+/* Sales records + Category / Allocation mappings -> dashboard rows */
+function joinRecords(recs){
+  const bad=s=>{s=String(s||'').trim().toLowerCase();return s==='ignore'||s==='packaging'};
+  // Category lookup: everything derived from the category row is computed once per item
+  const cm=new Map();
+  for(const [key,category,sub,size,name,long] of ref.category.rows)
+    cm.set(key,{category,sub,size,name,long,drop:bad(category)||bad(sub)||bad(size)});
+  // Allocation lookup
+  const am=new Map();
+  for(const [key,manager,storeName] of ref.allocation.rows){const ml=String(manager||'').trim().toLowerCase();
+    am.set(key,{manager,storeName,valid:ml!==''&&ml!=='unmapped'})}
+  let catMiss=0,amMiss=0;const rows=[],sgCache=new Map();
+  for(let i=0;i<recs.length;i++){
+    const m=recs[i],item=m.item,storeId=m.storeId,c=cm.get(item),a=am.get(storeId);
+    if(!c)catMiss++;
+    if(!a||!a.manager)amMiss++;
+    if(!a||!a.valid||(c&&c.drop))continue; // drops ignore/packaging rows and stores with no area manager
+    const category=c?c.category:'Unmapped',sub=c?c.sub:'Unmapped',size=c?c.size:'Unmapped';
+    const product=String(m.name||(c?c.name:'')||item||'Unknown product');
+    const sgKey=item+'\u0001'+product;let sg=sgCache.get(sgKey);
+    if(sg===undefined){sg=sizeGroupMask(category,size,sub,product);sgCache.set(sgKey,sg)}
+    rows.push({__item:item,__storeId:storeId,
+      __store:String(m.storeName||a.storeName||storeId||'Unknown store'),
+      __date:m.date,__qty:m.qty,__sales:m.sales,
+      __category:category,__sub:sub,__size:size,__manager:a.manager,__product:product,
+      __longName:String(m.long||(c?c.long:'')||product),__catMatched:!!c,__allocMatched:true,__sg:sg});
+  }
+  const msg=`Loaded ${fmt(rows.length)} valid sales rows of ${fmt(recs.length)}; ${fmt(cm.size)} unique item mappings; ${fmt(am.size)} store allocations. ${fmt(catMiss)} sales rows have no item mapping; ${fmt(amMiss)} rows skipped (no area manager).`;
+  return {rows,msg,warn:!!(catMiss||amMiss)};
+}
+async function buildDashboard(){
+  try{
+    $('buildBtn').disabled=true; setMessage('Reading files and matching records…');
+    await new Promise(r=>setTimeout(r,30)); // let the message paint before the heavy work
+    if(!refReady())throw Error('Category and Allocation mappings are not set. Upload those two files once.');
+    const sig=refSig();
+    const {rows,msg,warn}=joinRecords(menuRecords(await readSheet(files.menu)));
+    rawRows=rows;
+    finishBuild(msg,warn);
+    // Cache processed rows so the next page load skips Excel parsing entirely
+    setTimeout(()=>saveToDB(CACHE_KEY,{v:CACHE_VERSION,sig,menuSig,rows:rawRows,msg,warn}).catch(err=>console.warn('Row cache not saved',err)),300);
+  }catch(e){
+    setMessage('Could not build dashboard: '+e.message,true); console.error(e)
+  }finally{
+    $('buildBtn').disabled=!canBuild()
+  }
+}
+
+function finishBuild(msg,warn){
+  buildIndex();
+  $('dashboard').classList.remove('hidden'); populateFilters(); applyFilters(); $('exportBtn').disabled=false;
+  setMessage(msg,warn); initComparisonDates();
+  if(activeView==='upload')document.querySelector('.navitem[data-view="overview"]').click(); // stay put on Admin after an upload
+  else{markDirty(activeView);renderActive()}
+}
+
+/* One pass over the data to collect everything the filters need */
+function buildIndex(){
+  const x={managers:new Set(),stores:new Set(),cats:new Set(),subs:new Set(),sizes:new Set(),prods:new Set(),dates:new Set(),storesByManager:new Map(),combos:new Map(),storeCodes:new Map(),codesByManager:new Map(),years:new Set(),months:new Set()};
+  for(let i=0;i<rawRows.length;i++){const r=rawRows[i];
+    x.managers.add(r.__manager);x.stores.add(r.__store);x.cats.add(r.__category);x.subs.add(r.__sub);x.sizes.add(r.__size);x.prods.add(r.__longName);
+    const dt=r.__date;
+    if(dt){x.dates.add(dt);r.__y=+dt.slice(0,4);r.__m=+dt.slice(5,7);r.__d=+dt.slice(8,10);x.years.add(r.__y);x.months.add(r.__m)}
+    else r.__y=r.__m=r.__d=0;
+    let s=x.storesByManager.get(r.__manager);if(!s)x.storesByManager.set(r.__manager,s=new Set());s.add(r.__store);
+    // store code options for the Comparison view ("code — name")
+    let lab=x.storeCodes.get(r.__storeId);
+    if(lab===undefined){lab=r.__store&&r.__store!==r.__storeId?r.__storeId+' — '+r.__store:r.__storeId;x.storeCodes.set(r.__storeId,lab)}
+    let cs=x.codesByManager.get(r.__manager);if(!cs)x.codesByManager.set(r.__manager,cs=new Set());cs.add(lab);
+    const ck=r.__item+'\u0001'+r.__longName;
+    if(!x.combos.has(ck))x.combos.set(ck,{cat:r.__category,sub:r.__sub,size:r.__size,prod:r.__longName});
+  }
+  // months still in the database (not loaded yet) are offered in the Year / Month filters too
+  AVAIL.forEach(ym=>{x.years.add(+ym.slice(0,4));x.months.add(+ym.slice(5,7))});
+  x.dateList=[...x.dates].sort(); x.comboList=[...x.combos.values()];
+  x.codeByLabel=new Map([...x.storeCodes].map(([id,label])=>[label,id]));
+  idx=x;
+}
+
+/* =========================================
+   LAZY RENDERING: only the visible view is drawn
+   ========================================= */
+const GLOBAL_VIEWS=['overview','products','stores','menumix'];
+function markDirty(...views){views.forEach(v=>dirty.add(v))}
+function renderActive(){
+  if(!rawRows.length)return;
+  if(dirty.has(activeView)){const fn=renderers[activeView]; dirty.delete(activeView); if(fn)fn()}
+  fitChartTables();
+}
+// chart + table cards: when the table is wider than its half, it moves below the chart
+function fitChartTables(){
+  document.querySelectorAll('.chart-with-table').forEach(p=>{
+    if(!p.offsetParent)return; // hidden view: checked when it is shown
+    p.classList.remove('stacked');
+    const w=p.querySelector('.table-col .table-wrap');
+    if(w&&w.scrollWidth>w.clientWidth+2)p.classList.add('stacked');
+  });
+  refreezeTables(); // column widths may have changed
+}
+window.addEventListener('resize',()=>{clearTimeout(fitChartTables.t);fitChartTables.t=setTimeout(fitChartTables,200)});
+
+/* =========================================
+   METRIC & SIZE TOGGLE LOGIC
+   ========================================= */
+function switchMetric(metric){
+  currentMetric=metric;
+  $('btnMetricSales').classList.toggle('active',metric==='sales');
+  $('btnMetricQty').classList.toggle('active',metric!=='sales');
+  markDirty('overview'); renderActive();
+}
+function switchSizeGroup(group){
+  currentSizeGroup=group;
+  $('btnSizeHot').classList.toggle('active',group==='hot');
+  $('btnSizeCold').classList.toggle('active',group==='cold');
+  $('btnSizeJoeBox').classList.toggle('active',group==='joebox');
+  markDirty('sizes'); renderActive();
+}
+
+/* =========================================
+   CASCADING FILTER & DROPDOWN LOGIC
+   ========================================= */
+const MS_IDS=['fAM','fStore','fCategory','fSub','fSize','fProduct','fYear','fMonth','sfAM','sfStore','sfYear','sfMonth','cfAM','cfStore','cfCat','cfSub'];
+const MONTHS=['January','February','March','April','May','June','July','August','September','October','November','December'];
+const COMPARE_IDS=['cfAM','cfStore','cfCat','cfSub'];
+/* Date filter = selected years + selected months + day-of-month range (From/To boxes) */
+function dateFilter(prefix,dayPrefix=prefix){
+  const ys=getSelectedMulti(prefix+'Year').map(Number),ms=getSelectedMulti(prefix+'Month').map(l=>MONTHS.indexOf(l)+1);
+  const from=parseInt($(dayPrefix+'From').value,10),to=parseInt($(dayPrefix+'To').value,10);
+  const f={y:ys.length?new Set(ys):null,m:ms.length?new Set(ms):null,from:from>=1?from:0,to:to>=1?to:0};
+  f.any=!!(f.y||f.m||f.from||f.to);
+  return f;
+}
+// rows with no date are kept only while no date filter is set
+function dateOK(r,f){return r.__y?((!f.y||f.y.has(r.__y))&&(!f.m||f.m.has(r.__m))&&(!f.from||r.__d>=f.from)&&(!f.to||r.__d<=f.to)):!f.any}
+function setSelectedMulti(id,values){const S=new Set(values.map(String));for(const cb of $(`${id}_list`).querySelectorAll('input[type="checkbox"]'))cb.checked=S.has(cb.value);updateMultiSelectUI(id)}
+function debounce(fn,ms){let t;return()=>{clearTimeout(t);t=setTimeout(fn,ms)}}
+function initMultiSelects(){
+  MS_IDS.forEach(id=>{
+    const container=$('ms-'+id); if(!container)return;
+    container.innerHTML=`
+      <button class="ms-btn" type="button" id="${id}_btn"><span class="ms-btn-text" id="${id}_text">All</span></button>
+      <div class="ms-dropdown" id="${id}_dd">
+        <div class="ms-search"><input type="text" placeholder="Search..." id="${id}_search"></div>
+        <div class="ms-actions"><button type="button" data-action="all" data-id="${id}">Select All</button><button type="button" data-action="clear" data-id="${id}">Clear</button></div>
+        <div class="ms-list" id="${id}_list"></div>
+      </div>`;
+    $(`${id}_btn`).onclick=e=>{e.stopPropagation();const dd=$(`${id}_dd`);const isOpen=dd.classList.contains('open');closeAllDropdowns();if(!isOpen)dd.classList.add('open')};
+    $(`${id}_search`).oninput=e=>{const term=e.target.value.toLowerCase();for(const item of $(`${id}_list`).children){if(item.dataset.t!==undefined)item.style.display=item.dataset.t.includes(term)?'flex':'none'}};
+    $(`${id}_dd`).onclick=e=>e.stopPropagation();
+    // one delegated listener per list instead of one per checkbox
+    $(`${id}_list`).addEventListener('change',()=>{updateMultiSelectUI(id);onFilterChange(id)});
+  });
+  document.addEventListener('click',closeAllDropdowns);
+  document.querySelectorAll('.ms-actions button').forEach(btn=>{
+    btn.onclick=()=>{
+      const id=btn.dataset.id,on=btn.dataset.action==='all';
+      for(const el of $(`${id}_list`).children){if(el.style.display!=='none'){const cb=el.firstElementChild;if(cb&&cb.type==='checkbox')cb.checked=on}}
+      updateMultiSelectUI(id);onFilterChange(id);
+    };
+  });
+}
+function closeAllDropdowns(){document.querySelectorAll('.ms-dropdown.open').forEach(dd=>dd.classList.remove('open'))}
+function populateMultiSelect(id,values,preserveSelection=true,keepOrder=false){
+  const list=$(`${id}_list`); if(!list)return;
+  const prev=preserveSelection?new Set(getSelectedMulti(id)):new Set();
+  const seen=new Set();for(const v of values){const s=String(v??'');if(s.trim())seen.add(s)}
+  const unique=keepOrder?[...seen]:[...seen].sort((a,b)=>a.localeCompare(b));
+  if(!unique.length)list.innerHTML='<div class="ms-empty">No options</div>';
+  else{let html='';for(const v of unique){const e=esc(v);html+=`<label class="ms-item" data-t="${esc(v.toLowerCase())}"><input type="checkbox" value="${e}"${prev.has(v)?' checked':''}><span>${e}</span></label>`}list.innerHTML=html}
+  const s=$(`${id}_search`);if(s)s.value='';
+  updateMultiSelectUI(id);
+}
+function getSelectedMulti(id){const list=$(`${id}_list`);if(!list)return [];const out=[];for(const cb of list.querySelectorAll('input:checked'))out.push(cb.value);return out}
+function updateMultiSelectUI(id){
+  const list=$(`${id}_list`); if(!list)return;
+  const total=list.querySelectorAll('input[type="checkbox"]').length,selected=list.querySelectorAll('input:checked').length;
+  $(`${id}_text`).textContent=(selected===0||selected===total)?`All (${total})`:selected===1?list.querySelector('input:checked').value:`${selected} selected`;
+}
+
+function populateFilters(){
+  populateMultiSelect('fAM',idx.managers,false); populateMultiSelect('fStore',idx.stores,false);
+  populateMultiSelect('fCategory',idx.cats,false); populateMultiSelect('fSub',idx.subs,false);
+  populateMultiSelect('fSize',idx.sizes,false); populateMultiSelect('fProduct',idx.prods,false);
+  populateMultiSelect('sfAM',idx.managers,false); populateMultiSelect('sfStore',idx.stores,false);
+  populateMultiSelect('cfAM',idx.managers,false); populateMultiSelect('cfStore',idx.storeCodes.values(),false);
+  populateMultiSelect('cfCat',idx.cats,false); populateMultiSelect('cfSub',idx.subs,false);
+  const years=[...idx.years].sort((a,b)=>a-b).map(String),months=[...idx.months].sort((a,b)=>a-b).map(m=>MONTHS[m-1]);
+  ['f','sf'].forEach(p=>{populateMultiSelect(p+'Year',years,false,true);populateMultiSelect(p+'Month',months,false,true)});
+  ['f','sf'].forEach(p=>{$(p+'From').value='';$(p+'To').value=''});
+  // Comparison date pickers: limited to the dates present in the data
+  const dMin=AVAIL.length?AVAIL[0]+'-01':(idx.dateList[0]||''),dMax=idx.dateList[idx.dateList.length-1]||'';
+  ['aFrom','aTo','bFrom','bTo'].forEach(id=>{const el=$(id);el.value='';el.min=dMin;el.max=dMax});
+}
+
+function onFilterChange(changedId){
+  if(!idx)return;
+  // A Month pick loads the ticked months for the selected years. A Year pick loads only the months
+  // already ticked in the Month filter; with Month on "All" a Year pick loads nothing (no whole year by accident).
+  const yearPick=['fYear','sfYear'].includes(changedId);
+  if(['fMonth','sfMonth'].includes(changedId)||(yearPick&&getSelectedMulti(changedId.replace('Year','Month')).length)){
+    const need=monthsForFilter(changedId.startsWith('sf')?'sf':'f');
+    if(need.some(ym=>!LOADED.has(ym))){ensureMonths(need).then(()=>onFilterChange(changedId),()=>{});return}
+  }
+  if(COMPARE_IDS.includes(changedId)){ // Comparison view's own filters
+    if(changedId==='cfAM'){
+      const ams=getSelectedMulti('cfAM');let allowed;
+      if(!ams.length)allowed=idx.storeCodes.values();
+      else{allowed=new Set();ams.forEach(m=>{const s=idx.codesByManager.get(m);if(s)s.forEach(v=>allowed.add(v))})}
+      populateMultiSelect('cfStore',allowed,true);
+    }
+    if(changedId==='cfCat'){ // Sub Category list follows the chosen categories
+      const cats=getSelectedMulti('cfCat'),S=new Set(cats);
+      populateMultiSelect('cfSub',(cats.length?idx.comboList.filter(c=>S.has(c.cat)):idx.comboList).map(c=>c.sub),true);
+    }
+    markDirty('compare');renderActive();return;
+  }
+  if(changedId==='fAM'||changedId==='sfAM'){
+    const ams=getSelectedMulti(changedId);let allowed;
+    if(!ams.length)allowed=idx.stores;
+    else{allowed=new Set();ams.forEach(m=>{const s=idx.storesByManager.get(m);if(s)s.forEach(v=>allowed.add(v))})}
+    populateMultiSelect(changedId==='fAM'?'fStore':'sfStore',allowed,true);
+  }
+  if(changedId==='fCategory'||changedId==='fSub'||changedId==='fSize'){
+    // cascade over distinct item combinations instead of every sales row
+    let cs=idx.comboList;
+    const cats=getSelectedMulti('fCategory');
+    if(cats.length){const S=new Set(cats);cs=cs.filter(c=>S.has(c.cat))}
+    populateMultiSelect('fSub',cs.map(c=>c.sub),true);
+    const subs=getSelectedMulti('fSub');
+    if(subs.length){const S=new Set(subs);cs=cs.filter(c=>S.has(c.sub))}
+    populateMultiSelect('fSize',cs.map(c=>c.size),true);
+    const sizes=getSelectedMulti('fSize');
+    if(sizes.length){const S=new Set(sizes);cs=cs.filter(c=>S.has(c.size))}
+    populateMultiSelect('fProduct',cs.map(c=>c.prod),true);
+  }
+  applyFilters(changedId);
+}
+
+/* LINKED FILTERS: the same filter in the Dashboard modules, Size Mix % and Comparison follows one another,
+   so a pick in any module shows in all of them (Area Manager, Store, Category, Sub Category, Year, Month, days). */
+const FILTER_LINKS=[['fAM','sfAM','cfAM'],['fStore','sfStore','cfStore'],['fCategory','cfCat'],['fSub','cfSub'],['fYear','sfYear'],['fMonth','sfMonth']];
+let filterLinking=false;
+// store name <-> "code — name" (the Comparison store list uses codes)
+function storeLabelMaps(){
+  if(idx._s2l)return idx;
+  const s2l=new Map(),l2s=new Map();
+  for(let i=0;i<rawRows.length;i++){const r=rawRows[i];if(!s2l.has(r.__store)){const l=idx.storeCodes.get(r.__storeId);if(l){s2l.set(r.__store,l);l2s.set(l,r.__store)}}}
+  idx._s2l=s2l;idx._l2s=l2s;return idx;
+}
+// ticked values, with "everything ticked" counted as All (= nothing ticked)
+function pickedOf(id){const list=$(`${id}_list`);if(!list)return [];const all=list.querySelectorAll('input[type="checkbox"]').length,v=getSelectedMulti(id);return v.length===all?[]:v}
+{
+  const baseChange=onFilterChange;
+  onFilterChange=function(id){
+    baseChange(id);
+    if(filterLinking||!idx)return;
+    const grp=FILTER_LINKS.find(g=>g.includes(id));if(!grp)return;
+    const vals=pickedOf(id),store=grp[0]==='fStore',m=store?storeLabelMaps():null;
+    filterLinking=true;
+    try{
+      for(const t of grp){if(t===id||!$(`${t}_list`))continue;
+        let v=vals;
+        if(store&&id==='cfStore')v=vals.map(x=>m._l2s.get(x)).filter(Boolean);
+        if(store&&t==='cfStore'&&id!=='cfStore')v=vals.map(x=>m._s2l.get(x)).filter(Boolean);
+        if(String(pickedOf(t).slice().sort())===String(v.slice().sort()))continue;
+        setSelectedMulti(t,v);baseChange(t);
+      }
+    }finally{filterLinking=false}
+  };
+}
+const toSet=arr=>arr.length?new Set(arr):null;
+['fFrom','fTo','sfFrom','sfTo'].forEach(id=>$(id).addEventListener('input',debounce(()=>applyFilters(id),250)));
+// day boxes: Dashboard and Size Mix % follow one another
+[['fFrom','sfFrom'],['fTo','sfTo']].forEach(pair=>pair.forEach((id,i)=>{const other=pair[1-i];
+  $(id).addEventListener('input',debounce(()=>{if($(other).value!==$(id).value){$(other).value=$(id).value;applyFilters(other)}},260))}));
+['aFrom','aTo','bFrom','bTo'].forEach(id=>$(id).addEventListener('change',()=>{markDirty('compare');renderActive()}));
+
+function applyFilters(changedId){
+  if(!rawRows.length)return;
+  const sizeOnly=changedId&&changedId.startsWith('sf'),globalOnly=changedId&&!sizeOnly;
+  if(!sizeOnly){
+    globalFilters={ams:toSet(getSelectedMulti('fAM')),stores:toSet(getSelectedMulti('fStore')),cats:toSet(getSelectedMulti('fCategory')),subs:toSet(getSelectedMulti('fSub')),sizes:toSet(getSelectedMulti('fSize')),prods:toSet(getSelectedMulti('fProduct')),date:dateFilter('f')};
+    gcache=null; markDirty(...GLOBAL_VIEWS);
+  }
+  if(!globalOnly){
+    sizeFilters={ams:toSet(getSelectedMulti('sfAM')),stores:toSet(getSelectedMulti('sfStore')),date:dateFilter('sf')};
+    markDirty('sizes');
+  }
+  if(!changedId)markDirty('compare');
+  updateLoadHints();
+  renderActive();
+}
+// note shown when a selected year has months that are not loaded yet
+function updateLoadHints(){
+  [['f','fLoadHint'],['sf','sfLoadHint']].forEach(([p,id])=>{
+    const el=$(id);if(!el)return;
+    const ys=getSelectedMulti(p+'Year').map(Number);
+    const missing=[...new Set(AVAIL.filter(ym=>ys.includes(+ym.slice(0,4))&&!LOADED.has(ym)&&!AVAIL.filter(x=>x.slice(0,4)===ym.slice(0,4)).some(x=>LOADED.has(x))).map(ym=>ym.slice(0,4)))];
+    el.textContent=missing.length?`${missing.join(', ')} ${missing.length===1?"isn't":"aren't"} loaded yet — pick ${missing.length===1?'its':'their'} months in the Month filter to load them`:'';
+    el.classList.toggle('hidden',!missing.length);
+  });
+}
+initMultiSelects();
+
+/* ========================================= */
+function groupBy(rows,key,withItems=false){
+  const m=new Map();
+  for(let i=0;i<rows.length;i++){const r=rows[i],k=String(r[key]||'Unmapped');let x=m.get(k);
+    if(!x){x={name:k,qty:0,sales:0,rows:0,first:r};if(withItems)x.items=new Set();m.set(k,x)}
+    x.qty+=r.__qty;x.sales+=r.__sales;x.rows++;if(withItems)x.items.add(r.__item)}
+  return [...m.values()];
+}
+function aggregate(rows){let qty=0,sales=0;for(let i=0;i<rows.length;i++){qty+=rows[i].__qty;sales+=rows[i].__sales}return {qty,sales}}
+function share(value,total){return total?value/total*100:0}
+
+/* Filtered rows and groupings are computed once per filter state and shared by all views */
+function gc(){
+  if(gcache)return gcache;
+  const f=globalFilters,rows=[];
+  for(let i=0;i<rawRows.length;i++){const r=rawRows[i];
+    if((!f.ams||f.ams.has(r.__manager))&&(!f.stores||f.stores.has(r.__store))&&(!f.cats||f.cats.has(r.__category))&&(!f.subs||f.subs.has(r.__sub))&&(!f.sizes||f.sizes.has(r.__size))&&(!f.prods||f.prods.has(r.__longName))&&dateOK(r,f.date))rows.push(r)}
+  return gcache={rows,agg:aggregate(rows),groups:{}};
+}
+function grp(key){const c=gc();return c.groups[key]||(c.groups[key]=groupBy(c.rows,key))}
+
+const COLORS=['#3267e9','#18a88b','#f3b544','#8d6be8','#f07878','#44a7ce','#6a7c93','#e78ab5','#75b56b','#b9a04d','#4d9fba','#b46d43'];
+function styleDatasets(type,datasets){return datasets.map(d=>({...d,
+  backgroundColor:d.backgroundColor||((type==='line')?'rgba(50,103,233,.16)':COLORS),
+  borderColor:d.borderColor||(type==='line'?'#3267e9':'#fff'),
+  borderWidth:type==='line'?2:1,borderRadius:type==='bar'?4:0,fill:type==='line',tension:.25,pointRadius:type==='line'?2:0}))}
+
+function setChart(id,type,labels,datasets,horizontal=false){
+  const canvas=$(id); if(!canvas||typeof Chart==='undefined')return;
+  const ds=styleDatasets(type,datasets),existing=charts[id];
+  if(existing){ // update in place instead of destroying and rebuilding the chart
+    existing.data.labels=labels;existing.data.datasets=ds;existing.update('none');return;
+  }
+  const round=type==='doughnut'||type==='pie';
+  charts[id]=new Chart(canvas,{
+    type,
+    data:{labels,datasets:ds},
+    options:{
+      responsive:true,maintainAspectRatio:false,animation:false,
+      indexAxis:horizontal?'y':'x',
+      layout:{padding:{top:type==='line'||(type==='bar'&&!horizontal)?25:0,right:type==='bar'&&horizontal?48:0}},
+      plugins:{
+        legend:{display:type==='doughnut'||datasets.length>1,position:'bottom',labels:{boxWidth:9,font:{size:10}}},
+        tooltip:{callbacks:{label:c=>{const v=c.parsed.y??c.parsed.x??c.parsed;const t=c.dataset.suffix==='%'?pct(v):(currentMetric==='sales'?money(v):fmt(v));return `${c.dataset.label||'Value'}: ${t}`}}},
+        datalabels:{
+          display:function(context){
+            const data=context.dataset.data;
+            if(round){let total=0;for(let i=0;i<data.length;i++)total+=data[i];return (data[context.dataIndex]/total)>0.04}
+            if(type==='line')return data.length<=45&&context.chart.data.datasets.length===1; // labels on every point are slow and unreadable on long ranges
+            return true;
+          },
+          color:type==='doughnut'?'#fff':'#52637a',
+          anchor:type==='bar'||type==='line'?'end':'center',
+          align:type==='bar'?(horizontal?'right':'top'):(type==='line'?'top':'center'),
+          offset:type==='bar'?4:(type==='line'?6:0),
+          font:{size:10,weight:'bold'},
+          formatter:function(value,context){
+            if(context.dataset.suffix==='%')return Number(value).toFixed(1)+'%';
+            if(currentMetric==='sales'){
+              if(value>=1000000)return (value/1000000).toFixed(1).replace(/\.0$/,'')+'M';
+              if(value>=1000)return (value/1000).toFixed(1).replace(/\.0$/,'')+'K';
+              return value;
+            }
+            return fmt(value);
+          }
+        }
+      },
+      scales:round?{}:{
+        x:{grid:{display:false},ticks:{font:{size:9},maxRotation:horizontal?0:40,autoSkip:true}},
+        y:{beginAtZero:true,grid:{color:'#edf1f6'},ticks:{font:{size:9}}}
+      }
+    },
+    plugins:[ChartDataLabels]
+  });
+}
+
+/* Sum of every numeric field (and Map / Set field) across table rows: the Total row */
+function sumRows(rows){
+  const t={name:'Total',first:{}};
+  for(let i=0;i<rows.length;i++){const r=rows[i];
+    for(const k in r){if(k==='first'||k==='name')continue;const v=r[k];
+      if(typeof v==='number')t[k]=(t[k]||0)+v;
+      else if(v instanceof Map){const m=t[k]||(t[k]=new Map());v.forEach((n,kk)=>m.set(kk,(m.get(kk)||0)+n))}
+      else if(v instanceof Set){const s=t[k]||(t[k]=new Set());v.forEach(x=>s.add(x))}}}
+  return t;
+}
+/* drill (optional): clicking a row opens the Area Manager / Store breakdown popup for it */
+function tableRows(id,rows,cols,drill,limit=500){
+  const tb=$(id);if(!tb)return;
+  // every cell is worked out once, so a re-sort keeps each row's values (ranks included)
+  const cells=new Array(rows.length),clss=new Array(rows.length);
+  for(let i=0;i<rows.length;i++){const r=rows[i],v=new Array(cols.length),k=new Array(cols.length);
+    for(let j=0;j<cols.length;j++){const c=cols[j];v[j]=typeof c.v==='function'?c.v(r):r[c.k];k[j]=typeof c.cls==='function'?c.cls(r):(c.cls||'')}
+    cells[i]=v;clss[i]=k}
+  tb._t={rows,cols,cells,clss,limit};
+  tb._rows=rows;tb._drill=drill||null;tb.classList.toggle('drillable',!!drill);
+  paintRows(tb);
+  tblEnhance(tb);
+  // Total row (over all rows, not only the ones shown); text columns stay empty
+  const table=tb.closest('table');if(!table)return;
+  let tf=table.tFoot;
+  if(!rows.length){if(tf)tf.innerHTML='';tblDecorate(tb);return}
+  if(!tf)tf=table.createTFoot();
+  const t=sumRows(rows);let f='<tr>';
+  for(let j=0;j<cols.length;j++){const c=cols[j];let v='';
+    if(j===0)v='Total';
+    else if(c.num){try{const x=typeof c.v==='function'?c.v(t):t[c.k];v=c.html?c.html(x):esc(typeof x==='number'?fmt(x):x??'')}catch(e){v=''}}
+    f+=`<td class="${c.num?'num':''}">${v}</td>`}
+  tf.innerHTML=f+'</tr>';
+  tblDecorate(tb);
+}
+
+/* =========================================
+   TABLE TOOLS (every table)
+   - Sort: click a column heading. Numbers go high→low first, text A→Z; a second click reverses,
+     a third click goes back to the normal order. All rows are sorted, not only the ones shown.
+   - Columns: the "Columns" button above each table shows / hides columns (remembered in this browser).
+   - Frozen columns: the columns up to the product name (or the store / first column) stay in place
+     when the table is scrolled sideways.
+   ========================================= */
+const TBL_HIDE_KEY='viewx-mm-hidden-cols';
+let tblHidden={};try{tblHidden=JSON.parse(localStorage.getItem(TBL_HIDE_KEY)||'{}')||{}}catch(e){}
+const cellNum=v=>{if(typeof v==='number')return v;const t=String(v??'').replace(/<[^>]*>/g,'').replace(/,/g,'').trim();const m=t.match(/^[+-]?\d+(\.\d+)?/);return m?parseFloat(m[0]):NaN};
+const blankCell=v=>v===''||v==null||/^[-—–]?$/.test(String(v).trim());
+// heading text without the sort arrow; month names of the 2-month popup become [A] / [B] so a hidden column stays hidden for other months
+function thKey(th){
+  let t=[...th.childNodes].filter(n=>!(n.classList&&n.classList.contains('ts-ico'))).map(n=>n.textContent).join('').replace(/\s+/g,' ').trim();
+  if(M.la&&th.closest('#cmpModal'))t=t.split(M.la).join('[A]').split(M.lb).join('[B]');
+  return t;
+}
+function paintRows(tb){
+  const T=tb._t;if(!T)return;
+  const {rows,cols,cells,clss,limit}=T,s=tb._sort;
+  const order=rows.map((_,i)=>i);
+  if(s&&s.j<cols.length){
+    const j=s.j,d=s.dir;let numeric=true;
+    for(let i=0;i<order.length;i++){const x=cells[i][j];if(!blankCell(x)&&isNaN(cellNum(x))){numeric=false;break}}
+    order.sort((a,b)=>{const x=cells[a][j],y=cells[b][j];
+      if(numeric){const p=cellNum(x),q=cellNum(y);return d*((isNaN(p)?-Infinity:p)-(isNaN(q)?-Infinity:q))||a-b}
+      return d*String(x??'').replace(/<[^>]*>/g,'').localeCompare(String(y??'').replace(/<[^>]*>/g,''),undefined,{numeric:true,sensitivity:'base'})||a-b});
+  }
+  const n=Math.min(order.length,limit);let html='';
+  for(let o=0;o<n;o++){const i=order[o];html+=tb._drill?`<tr data-i="${i}" title="Click for Area Manager and Store details">`:'<tr>';
+    for(let j=0;j<cols.length;j++){const c=cols[j],v=cells[i][j];html+=`<td class="${c.num?'num':''} ${clss[i][j]}">${c.html?c.html(v):esc(v??'')}</td>`}
+    html+='</tr>'}
+  tb.innerHTML=html||`<tr><td colspan="${cols.length}" class="empty">No matching records</td></tr>`;
+}
+function tblEnhance(tb){
+  const table=tb.closest('table');if(!table)return;
+  table.dataset.t=tb.id;
+  if(table._tbl)return;table._tbl=1;
+  // sorting: one listener per table (headings may be rebuilt)
+  table.addEventListener('click',e=>{
+    const tb=document.getElementById(table.dataset.t);const th=e.target.closest('th');if(!tb||!th||!table.tHead||!table.tHead.contains(th)||!tb._t)return;
+    e.stopPropagation();
+    const j=[...th.parentElement.children].indexOf(th),c=tb._t.cols[j];if(!c)return;
+    const first=c.num?-1:1,s=tb._sort;
+    tb._sort=!s||s.j!==j?{j,dir:first}:s.dir===first?{j,dir:-first}:null;
+    paintRows(tb);tblDecorate(tb);
+  },true);
+  // Columns button above the table
+  const anchor=table.closest('.table-wrap')||table;
+  const bar=document.createElement('div');bar.className='tbl-tools';bar.setAttribute('data-html2canvas-ignore','true');
+  bar.innerHTML='<button type="button" class="tbl-colbtn" title="Show or hide columns">☰ Columns</button><div class="tbl-colmenu hidden"></div>';
+  anchor.parentElement.insertBefore(bar,anchor);
+  const btn=bar.firstElementChild,menu=bar.lastElementChild;
+  btn.addEventListener('click',e=>{
+    e.stopPropagation();const tb=document.getElementById(table.dataset.t);if(!tb)return;const show=menu.classList.contains('hidden');
+    document.querySelectorAll('.tbl-colmenu').forEach(m=>m.classList.add('hidden'));if(!show||!table.tHead||!table.tHead.rows[0])return;
+    const hid=new Set(tblHidden[tb.id]||[]);
+    menu.innerHTML=[...table.tHead.rows[0].cells].map((th,j)=>{const h=thKey(th);return `<label><input type="checkbox" data-h="${esc(h)}"${hid.has(h)?'':' checked'}${j===0?' disabled':''}><span>${esc(h.replace('[A]',M.la||'A').replace('[B]',M.lb||'B'))}</span></label>`}).join('')
+      +'<div class="tbl-colacts"><button type="button" data-a="all">Show all</button></div>';
+    menu.classList.remove('hidden');
+  });
+  menu.addEventListener('click',e=>{e.stopPropagation();const tb=document.getElementById(table.dataset.t);if(tb&&e.target.dataset&&e.target.dataset.a==='all'){delete tblHidden[tb.id];saveTblHidden();menu.querySelectorAll('input').forEach(i=>{i.checked=true});tblDecorate(tb)}});
+  menu.addEventListener('change',e=>{const cb=e.target,tb=document.getElementById(table.dataset.t);if(!tb||!cb.dataset||cb.dataset.h===undefined)return;
+    const hid=new Set(tblHidden[tb.id]||[]);cb.checked?hid.delete(cb.dataset.h):hid.add(cb.dataset.h);
+    if(hid.size)tblHidden[tb.id]=[...hid];else delete tblHidden[tb.id];saveTblHidden();tblDecorate(tb)});
+}
+function saveTblHidden(){try{localStorage.setItem(TBL_HIDE_KEY,JSON.stringify(tblHidden))}catch(e){}}
+document.addEventListener('click',()=>document.querySelectorAll('.tbl-colmenu').forEach(m=>m.classList.add('hidden')));
+function tblStyle(id){let s=document.getElementById(id);if(!s){s=document.createElement('style');s.id=id;document.head.appendChild(s)}return s}
+// sort arrows + hidden columns, then the frozen columns
+function tblDecorate(tb){
+  const table=tb.closest('table');if(!table||!table.tHead||!table.tHead.rows[0])return;
+  const ths=[...table.tHead.rows[0].cells],hid=new Set(tblHidden[tb.id]||[]),sel=`table[data-t="${tb.id}"]`;let css='';
+  ths.forEach((th,j)=>{
+    let ic=th.querySelector('.ts-ico');if(!ic){ic=document.createElement('span');ic.className='ts-ico';th.appendChild(ic)}
+    ic.textContent=tb._sort&&tb._sort.j===j?(tb._sort.dir>0?'▲':'▼'):'';
+    th.classList.toggle('ts-on',!!(tb._sort&&tb._sort.j===j));
+    if(j>0&&hid.has(thKey(th)))css+=`${sel} tr>*:nth-child(${j+1}){display:none}`;
+  });
+  tblStyle('tblhide-'+tb.id).textContent=css;
+  tblFreeze(tb);
+}
+function tblFreeze(tb){
+  const table=tb.closest('table'),st=tblStyle('tblfz-'+tb.id);
+  if(!table||!table.tHead||!table.tHead.rows[0]||!table.offsetParent){st.textContent='';return}
+  const ths=[...table.tHead.rows[0].cells],keys=ths.map(thKey);
+  let k=keys.findIndex(h=>/product|long name/i.test(h));
+  if(k<0)k=keys.findIndex(h=>/^store( name)?$/i.test(h));
+  if(k<0)k=0;
+  const sel=`table[data-t="${tb.id}"]`;let left=0,css='',last=-1;
+  for(let j=0;j<=k;j++){const w=ths[j].offsetWidth;if(!w)continue;const n=j+1;
+    css+=`${sel} tr>*:nth-child(${n}){position:sticky;left:${left}px;z-index:2}`
+      +`${sel} tbody td:nth-child(${n}){background:#fff}${sel} tbody tr:hover td:nth-child(${n}){background:#f1f6ff}`
+      +`${sel} thead th:nth-child(${n}){z-index:4;background:#f6f8fb}${sel} tfoot td:nth-child(${n}){z-index:4;background:#eaf1fc}`;
+    left+=w;last=n}
+  if(last>0)css+=`${sel} tr>*:nth-child(${last}){box-shadow:6px 0 6px -5px rgba(20,36,59,.22)}`;
+  st.textContent=css;
+}
+function refreezeTables(){document.querySelectorAll('table[data-t]').forEach(t=>{const tb=document.getElementById(t.dataset.t);if(tb)tblFreeze(tb)})}
+
+/* =========================================
+   DRILL-DOWN POPUP — Area Manager and Store breakdown of one table entry
+   spec = {dim, ctx, label, match}: ctx() returns {rows,scope} (one period)
+   or {A,B,la,lb,scope} (two periods); match(row) returns a test for sales rows.
+   ========================================= */
+const byKey=(key,dim,ctx)=>({dim,ctx,label:r=>r.name,match:r=>x=>String(x[key]||'Unmapped')===r.name});
+const dashCtx=()=>({rows:gc().rows,scope:`${TITLES[activeView]||'Dashboard'} • current dashboard filters`});
+const modalCtx=()=>({A:M.A||[],B:M.B||[],la:M.la,lb:M.lb,scope:`${TITLES[modalView]} • ${M.laFull} vs ${M.lbFull}`});
+let DR=null; // what the open popup shows, kept for the Excel export
+function drillTable(id,title,cols,list){
+  const tot=sumRows(list),isNum=c=>c.t!=='s';
+  const show=(c,v)=>c.t==='s'?esc(v??''):c.t==='n'?fmt(v):c.t==='m'?money(v):pct(v);
+  const raw=(c,v)=>c.t==='s'?String(v??''):c.t==='p'||c.t==='c'?Math.round(v*10)/10:Math.round(v*100)/100;
+  let h=`<thead><tr>${cols.map(c=>`<th class="${isNum(c)?'num':''}">${esc(c.h)}</th>`).join('')}</tr></thead><tbody>`;
+  for(const r of list)h+='<tr>'+cols.map(c=>{const v=c.f(r);return `<td class="${isNum(c)?'num':''} ${c.t==='c'?chgCls(v):''}">${show(c,v)}</td>`}).join('')+'</tr>';
+  if(!list.length)h+=`<tr><td colspan="${cols.length}" class="empty">No matching records</td></tr>`;
+  h+='</tbody>';
+  if(list.length)h+='<tfoot><tr>'+cols.map((c,j)=>`<td class="${isNum(c)?'num':''}">${j===0?'Total':isNum(c)?show(c,c.f(tot)):''}</td>`).join('')+'</tr></tfoot>';
+  $(id).innerHTML=h;
+  const dtb=$(id).tBodies[0]; // sorting, Columns and frozen columns for the popup tables too
+  if(dtb&&list.length){dtb.id=id+'Body';dtb._t={rows:list,cols:cols.map(c=>({num:isNum(c),html:x=>x})),cells:list.map(r=>cols.map(c=>show(c,c.f(r)))),clss:list.map(r=>cols.map(c=>c.t==='c'?chgCls(c.f(r)):'')),limit:1e9};tblEnhance(dtb);setTimeout(()=>tblDecorate(dtb),0)}
+  const aoa=[cols.map(c=>c.h),...list.map(r=>cols.map(c=>raw(c,c.f(r))))];
+  if(list.length)aoa.push(cols.map((c,j)=>j===0?'Total':isNum(c)?raw(c,c.f(tot)):''));
+  return {title,aoa};
+}
+function openDrill(spec,row){
+  if(!spec||!row)return;
+  const c=spec.ctx(),test=spec.match(row),name=String(spec.label(row)),two=!!c.B;
+  const storeLead=[{h:'Store ID',t:'s',f:r=>r.first.__storeId},{h:'Store',t:'s',f:r=>r.name},{h:'Area Manager',t:'s',f:r=>r.first.__manager}];
+  const amLead=[{h:'Area Manager',t:'s',f:r=>r.name}];
+  let am,st,cols,kpis;
+  const storeKey=r=>r.__storeId||r.__store;
+  if(two){
+    const A=c.A.filter(test),B=c.B.filter(test),aa=aggregate(A),bb=aggregate(B);
+    am=pairGroups(A,B,'__manager');st=pairGroups(A,B,'__store');
+    cols=[{h:`${c.la} Qty`,t:'n',f:r=>r.aq},{h:`${c.lb} Qty`,t:'n',f:r=>r.bq},{h:'Qty Change %',t:'c',f:r=>pctChange(r.aq,r.bq)},
+          {h:`${c.la} Sales`,t:'m',f:r=>r.as},{h:`${c.lb} Sales`,t:'m',f:r=>r.bs},{h:'Sales Change %',t:'c',f:r=>pctChange(r.as,r.bs)}];
+    kpis=[['Sales',aa.sales,bb.sales,'m'],['Units Sold',aa.qty,bb.qty,'n'],['Area Managers',uniqCount(A,r=>r.__manager),uniqCount(B,r=>r.__manager),'n'],['Stores',uniqCount(A,storeKey),uniqCount(B,storeKey),'n']];
+  }else{
+    const R=c.rows.filter(test),T=aggregate(R),bySales=(x,y)=>y.sales-x.sales;
+    am=groupBy(R,'__manager').sort(bySales);st=groupBy(R,'__store').sort(bySales);
+    cols=[{h:'Qty',t:'n',f:r=>r.qty},{h:'Qty %',t:'p',f:r=>share(r.qty,T.qty)},{h:'Sales',t:'m',f:r=>r.sales},{h:'Sales %',t:'p',f:r=>share(r.sales,T.sales)}];
+    kpis=[['Sales',T.sales,null,'m'],['Units Sold',T.qty,null,'n'],['Area Managers',uniqCount(R,r=>r.__manager),null,'n'],['Stores',uniqCount(R,storeKey),null,'n']];
+  }
+  const f=(v,t)=>t==='m'?money(v):fmt(v);
+  $('drillEyebrow').textContent=`${spec.dim} details`;
+  $('drillTitle').textContent=name;
+  $('drillSub').textContent=c.scope||'';
+  $('drillSections').innerHTML=`<div class="kpis">${kpis.map(([l,a,b,t])=>`<div class="kpi"><div class="label">${esc(l)}</div><div class="value ${two?'mval':''}">${two?`${f(a,t)} → ${f(b,t)}`:f(a,t)}</div><div class="hint">${two?`${esc(c.la)} → ${esc(c.lb)}${t==='m'||l==='Units Sold'?` • ${pctChange(a,b)>0?'+':''}${pct(pctChange(a,b))}`:''}`:'In this selection'}</div></div>`).join('')}</div>`
+    +`<div class="table-panel"><div class="panel-head"><h3>Area Manager wise</h3><span>${fmt(am.length)} area managers</span></div><div class="table-wrap"><table id="drillAM"></table></div></div>`
+    +`<div class="table-panel"><div class="panel-head"><h3>Store wise</h3><span>${fmt(st.length)} stores</span></div><div class="table-wrap"><table id="drillStore"></table></div></div>`;
+  DR={dim:spec.dim,name,scope:c.scope||'',two,la:c.la,lb:c.lb,kpis,
+    tables:[drillTable('drillAM','Area Manager',[...amLead,...cols],am),drillTable('drillStore','Store',[...storeLead,...cols],st)]};
+  $('drillModal').classList.remove('hidden');$('drillModal').scrollTop=0;document.body.style.overflow='hidden';
+}
+function closeDrill(){$('drillModal').classList.add('hidden');if($('cmpModal').classList.contains('hidden'))document.body.style.overflow=''}
+document.addEventListener('click',e=>{
+  const tr=e.target.closest&&e.target.closest('tbody.drillable tr[data-i]');if(!tr)return;
+  const tb=tr.parentElement;openDrill(tb._drill,tb._rows[+tr.dataset.i]);
+});
+$('drillClose').addEventListener('click',closeDrill);
+document.addEventListener('keydown',e=>{if(e.key==='Escape'&&!$('drillModal').classList.contains('hidden')&&$('pwModal').classList.contains('hidden')){e.stopImmediatePropagation();closeDrill()}});
+$('drillPdf').addEventListener('click',e=>exportPDF($('drillBody'),`${DR.dim} - ${DR.name}`,e.currentTarget,[],DR.scope));
+$('drillXls').addEventListener('click',()=>{
+  if(!DR)return;
+  if(typeof XLSX==='undefined'){alert('The Excel library has not loaded (internet connection needed).');return}
+  const wb=XLSX.utils.book_new();
+  const summary=[[DR.dim,DR.name],['Scope',DR.scope],['Exported',new Date().toLocaleString()],[],
+    DR.two?['Measure',DR.la,DR.lb,'Change %']:['Measure','Value'],
+    ...DR.kpis.map(([l,a,b])=>DR.two?[l,a,b,Math.round(pctChange(a,b)*10)/10]:[l,a])];
+  XLSX.utils.book_append_sheet(wb,XLSX.utils.aoa_to_sheet(summary),'Summary');
+  DR.tables.forEach(t=>{const ws=XLSX.utils.aoa_to_sheet(t.aoa);ws['!cols']=t.aoa[0].map(h=>({wch:Math.max(12,String(h).length+2)}));XLSX.utils.book_append_sheet(wb,ws,t.title)});
+  XLSX.writeFile(wb,exportName(`${DR.dim} ${DR.name}`,'xlsx'));
+});
+
+function sortData(data,key,dir){
+  return data.sort((a,b)=>{const x=a[key],y=b[key];
+    if(typeof x==='string'&&typeof y==='string')return dir*x.localeCompare(y);
+    return dir*((x||0)-(y||0))});
+}
+function updateSortIcons(){
+  document.querySelectorAll('.sort-icon').forEach(el=>el.textContent='');
+  if(currentSort.table){
+    const th=document.querySelector(`th[data-sort="${currentSort.table}"]`);
+    const icon=th&&th.querySelector('.sort-icon');
+    if(icon)icon.textContent=currentSort.dir===1?' ▲':' ▼';
+  }
+}
+
+/* =========================================
+   VIEW RENDERERS
+   ========================================= */
+function renderOverview(){
+  const {rows,agg:a}=gc();
+  const isSales=currentMetric==='sales',metricKey=isSales?'sales':'qty',metricLabel=isSales?'Sales':'Qty',formatMetric=isSales?money:fmt;
+
+  $('kpi1Label').textContent=isSales?'Sales / Amount':'Total Quantity';
+  $('kSales').textContent=isSales?money(a.sales):fmt(a.qty);
+  $('kpi1Hint').textContent=isSales?'Sum of AMOUNT':'Sum of QTY';
+  $('kpi2Label').textContent=isSales?'Units Sold':'Sales Amount';
+  $('kQty').textContent=isSales?fmt(a.qty):money(a.sales);
+  $('kpi2Hint').textContent=isSales?'Sum of QTY':'Sum of AMOUNT';
+
+  const c=gc();
+  if(!c.counts){const st=new Set(),it=new Set();for(let i=0;i<rows.length;i++){const r=rows[i];st.add(r.__storeId||r.__store);if(r.__item)it.add(r.__item)}c.counts={stores:st.size,items:it.size}}
+  $('kStores').textContent=fmt(c.counts.stores);
+  $('kProducts').textContent=fmt(c.counts.items);
+
+  const dirFor=t=>currentSort.table===t?currentSort.dir:-1;
+  const cats=sortData(grp('__category').slice(),metricKey,dirFor('catAmount'));
+  const managers=sortData(grp('__manager').slice(),metricKey,dirFor('amCont'));
+  const stores=sortData(grp('__store').slice(),metricKey,dirFor('storeCont'));
+  const dates=grp('__date').filter(x=>x.name!=='Unmapped').sort((x,y)=>x.name<y.name?-1:x.name>y.name?1:0);
+
+  $('catAmountTitle').textContent=`Category ${isSales?'Sales':'Quantity'} Comparison`;
+  $('catAmountSpan').textContent=$('amContSpan').textContent=$('storeContSpan').textContent=isSales?'Sales Value':'Units Sold';
+  const hdr=`${metricLabel} <span class="sort-icon"></span>`;
+  $('catAmountColHdr').innerHTML=hdr;$('amContColHdr').innerHTML=hdr;$('storeContColHdr').innerHTML=hdr;
+  $('trendTitle').textContent=`${isSales?'Sales':'Quantity'} Trend`;
+
+  const total=a[metricKey],top=list=>{let m=-Infinity;for(const x of list)if(x[metricKey]>m)m=x[metricKey];return m};
+  const shareCol={num:true,v:r=>pct(share(r[metricKey],total))};
+
+  setChart('catAmountChart','bar',cats.slice(0,10).map(x=>x.name),[{label:metricLabel,data:cats.slice(0,10).map(x=>x[metricKey])}]);
+  const maxCat=top(cats);
+  tableRows('catAmountRows',cats,[{k:'name'},{num:true,v:r=>formatMetric(r[metricKey]),cls:r=>r[metricKey]===maxCat?'cf-high':(share(r[metricKey],total)<5?'cf-low':'')},shareCol],byKey('__category','Category',dashCtx));
+
+  setChart('amContChart','doughnut',managers.slice(0,10).map(x=>x.name),[{label:metricLabel,data:managers.slice(0,10).map(x=>x[metricKey])}]);
+  const maxAM=top(managers);
+  tableRows('amContRows',managers,[{k:'name'},{num:true,v:r=>formatMetric(r[metricKey]),cls:r=>r[metricKey]===maxAM?'cf-high':''},shareCol],byKey('__manager','Area Manager',dashCtx));
+
+  setChart('storeContChart','bar',stores.slice(0,15).map(x=>x.name),[{label:metricLabel,data:stores.slice(0,15).map(x=>x[metricKey])}],true);
+  const maxStore=top(stores);
+  tableRows('storeContRows',stores,[{k:'name'},{num:true,v:r=>formatMetric(r[metricKey]),cls:r=>r[metricKey]===maxStore?'cf-high':''},shareCol],byKey('__store','Store',dashCtx));
+
+  setChart('trendChart','line',dates.map(x=>x.name),[{label:metricLabel,data:dates.map(x=>x[metricKey])}]);
+  updateSortIcons();
+}
+
+function renderProducts(){
+  const a=gc().agg,products=grp('__product').slice().sort((x,y)=>y.sales-x.sales);
+  setChart('productChart','bar',products.slice(0,20).map(x=>x.name),[{label:'Sales',data:products.slice(0,20).map(x=>x.sales)}],true);
+  $('productCount').textContent=`${fmt(products.length)} products`;
+  let rank=0;
+  tableRows('productRows',products,[{v:()=>++rank},{v:r=>r.first.__item},{k:'name'},{v:r=>r.first.__size},{v:r=>r.first.__category},{k:'qty',num:true},{num:true,v:r=>money(r.sales)},{num:true,v:r=>pct(share(r.sales,a.sales))}],byKey('__product','Product',dashCtx));
+}
+
+function renderStores(){
+  const a=gc().agg,stores=grp('__store').slice().sort((x,y)=>y.sales-x.sales);
+  setChart('storeChart','bar',stores.slice(0,25).map(x=>x.name),[{label:'Sales',data:stores.slice(0,25).map(x=>x.sales)}],true);
+  $('storeCount').textContent=`${fmt(stores.length)} stores`;
+  let rank=0;
+  tableRows('storeRows',stores,[{v:()=>++rank},{v:r=>r.first.__storeId},{k:'name'},{v:r=>r.first.__manager},{k:'qty',num:true},{num:true,v:r=>money(r.sales)},{num:true,v:r=>pct(share(r.sales,a.sales))}],byKey('__store','Store',dashCtx));
+}
+
+function renderMenuMix(){
+  const {rows,agg:a}=gc();
+  const cats=grp('__category').slice().sort((x,y)=>y.sales-x.sales),subs=grp('__sub').slice().sort((x,y)=>y.sales-x.sales);
+  setChart('mixCategoryChart','doughnut',cats.slice(0,12).map(x=>x.name),[{label:'Sales',data:cats.slice(0,12).map(x=>x.sales)}]);
+  setChart('subChart','bar',subs.slice(0,20).map(x=>x.name),[{label:'Sales',data:subs.slice(0,20).map(x=>x.sales)}],true);
+  const c=gc();
+  if(!c.mix){
+    // two-level map avoids building a concatenated string key for every row
+    const byItem=new Map(),list=[];
+    for(let i=0;i<rows.length;i++){const r=rows[i];let inner=byItem.get(r.__item);if(!inner)byItem.set(r.__item,inner=new Map());
+      let x=inner.get(r.__product);if(!x){x={item:r.__item,product:r.__product,category:r.__category,sub:r.__sub,size:r.__size,qty:0,sales:0};inner.set(r.__product,x);list.push(x)}
+      x.qty+=r.__qty;x.sales+=r.__sales}
+    c.mix=list.sort((x,y)=>y.sales-x.sales);
+  }
+  tableRows('mixRows',c.mix,[{k:'item'},{k:'product'},{k:'category'},{k:'sub'},{k:'size'},{k:'qty',num:true},{num:true,v:r=>pct(share(r.qty,a.qty))},{num:true,v:r=>money(r.sales)},{num:true,v:r=>pct(share(r.sales,a.sales))}],
+    {dim:'Product',ctx:dashCtx,label:r=>`${r.product} (${r.item})`,match:r=>x=>x.__item===r.item&&x.__product===r.product});
+}
+
+function renderSizes(){
+  const f=sizeFilters,bit=SG_BIT[currentSizeGroup]||0,rows=[];
+  for(let i=0;i<rawRows.length;i++){const r=rawRows[i];
+    if((r.__sg&bit)&&(!f.ams||f.ams.has(r.__manager))&&(!f.stores||f.stores.has(r.__store))&&dateOK(r,f.date))rows.push(r)}
+
+  const sizeAgg=aggregate(rows);
+  const sizeCtx=()=>({rows,scope:`Size Mix % • ${SIZE_GROUP_LABEL[currentSizeGroup]} • Size Mix filters`});
+  const sizeGroups=groupBy(rows,'__size',true).sort((x,y)=>y.qty-x.qty);
+  const topSizeObj=sizeGroups[0]||{name:'—',qty:0};
+  $('sizeCount').textContent=fmt(sizeGroups.length);
+  $('topSize').textContent=topSizeObj.name;
+  $('topSizePct').textContent=pct(share(topSizeObj.qty,sizeAgg.qty));
+  $('unknownSize').textContent=fmt((sizeGroups.find(x=>x.name.toLowerCase()==='unmapped')||{qty:0}).qty);
+
+  const names=sizeGroups.map(x=>x.name);
+  setChart('sizeQtyChart','doughnut',names,[{label:'Quantity %',data:sizeGroups.map(x=>share(x.qty,sizeAgg.qty)),suffix:'%'}]);
+  setChart('sizeSalesChart','doughnut',names,[{label:'Sales %',data:sizeGroups.map(x=>share(x.sales,sizeAgg.sales)),suffix:'%'}]);
+  tableRows('sizeRows',sizeGroups,[{k:'name'},{k:'qty',num:true},{num:true,v:r=>pct(share(r.qty,sizeAgg.qty))},{num:true,v:r=>money(r.sales)},{num:true,v:r=>pct(share(r.sales,sizeAgg.sales))},{num:true,v:r=>fmt(r.items.size)}],byKey('__size','Size',sizeCtx));
+
+  // Store-wise breakdown
+  const storeMap=new Map();
+  for(let i=0;i<rows.length;i++){const r=rows[i];let rec=storeMap.get(r.__store);
+    if(!rec)storeMap.set(r.__store,rec={name:r.__store,qty:0,sales:0,sizes:new Map()});
+    rec.qty+=r.__qty;rec.sales+=r.__sales;rec.sizes.set(r.__size,(rec.sizes.get(r.__size)||0)+r.__qty)}
+  const storeList=[...storeMap.values()].sort((a,b)=>b.sales-a.sales);
+  const sizeCols=names.slice().sort();
+
+  const headerRow=$('storeSizeHeaderRow');
+  while(headerRow.children.length>3)headerRow.removeChild(headerRow.lastChild);
+  sizeCols.forEach(s=>{const th=document.createElement('th');th.className='num';th.textContent=s+' %';headerRow.appendChild(th)});
+
+  const cols=[{k:'name'},{k:'qty',num:true},{num:true,v:r=>money(r.sales)}];
+  sizeCols.forEach(s=>cols.push({num:true,v:r=>pct(share(r.sizes.get(s)||0,r.qty))}));
+  tableRows('storeSizeRows',storeList,cols,byKey('__store','Store',sizeCtx));
+}
+
+function initComparisonDates(){
+  // default: previous month (A) vs latest month (B)
+  const yms=[...new Set(idx.dateList.map(d=>d.slice(0,7)))];if(!yms.length)return;
+  const pick=(p,ym)=>{const ds=idx.dateList.filter(d=>d.startsWith(ym));$(p+'From').value=ds[0];$(p+'To').value=ds[ds.length-1]};
+  pick('a',yms[Math.max(0,yms.length-2)]);pick('b',yms[yms.length-1]);
+}
+// Period date range from its From/To pickers (YYYY-MM-DD strings compare correctly as text)
+function periodRange(p){
+  let from=$(p+'From').value,to=$(p+'To').value;
+  if(from&&to&&from>to)[from,to]=[to,from];
+  return {from,to,test:r=>!!r.__date&&(!from||r.__date>=from)&&(!to||r.__date<=to)};
+}
+const fmtDate=d=>d?new Date(d+'T00:00').toLocaleDateString('en-GB',{day:'numeric',month:'short',year:'numeric'}):'…';
+const rangeText=g=>!g.from&&!g.to?'All dates':`${fmtDate(g.from)} – ${fmtDate(g.to)}`;
+
+/* Shared comparison engine: one pass over the data for both periods and the breakdown */
+const pctChange=(x,y)=>x?((y-x)/Math.abs(x))*100:(y?100:0);
+function compareCompute(pred,key,fA,fB){
+  const m=new Map(),aa={qty:0,sales:0},bb={qty:0,sales:0};
+  for(let i=0;i<rawRows.length;i++){const r=rawRows[i];if(!r.__y)continue;
+    if(pred&&!pred(r))continue;
+    const inA=fA(r),inB=fB(r);
+    if(!inA&&!inB)continue;
+    const name=String(r[key]||'Unmapped');let x=m.get(name);
+    if(!x)m.set(name,x={name,aq:0,bq:0,as:0,bs:0});
+    if(inA){x.aq+=r.__qty;x.as+=r.__sales;aa.qty+=r.__qty;aa.sales+=r.__sales}
+    if(inB){x.bq+=r.__qty;x.bs+=r.__sales;bb.qty+=r.__qty;bb.sales+=r.__sales}}
+  return {aa,bb,results:[...m.values()].sort((x,y)=>y.bs-x.bs)};
+}
+const COMPARE_COLS=[{k:'name'},{k:'aq',num:true},{k:'bq',num:true},{num:true,v:r=>pct(pctChange(r.aq,r.bq))},{num:true,v:r=>money(r.as)},{num:true,v:r=>money(r.bs)},{num:true,v:r=>pct(pctChange(r.as,r.bs))}];
+
+function runComparison(){
+  if(!rawRows.length)return;
+  // each period has its own From/To date range
+  const fAms=toSet(getSelectedMulti('cfAM')),labels=getSelectedMulti('cfStore'),fStores=labels.length?new Set(labels.map(l=>idx.codeByLabel.get(l))):null;
+  const fCats=toSet(getSelectedMulti('cfCat')),fSubs=toSet(getSelectedMulti('cfSub'));
+  const pred=(fAms||fStores||fCats||fSubs)?r=>(!fAms||fAms.has(r.__manager))&&(!fStores||fStores.has(r.__storeId))&&(!fCats||fCats.has(r.__category))&&(!fSubs||fSubs.has(r.__sub)):null;
+  const ga=periodRange('a'),gb=periodRange('b');
+  const {aa,bb,results}=compareCompute(pred,$('compareBy').value,ga.test,gb.test);
+  $('aSales').textContent=money(aa.sales);$('bSales').textContent=money(bb.sales);
+  $('aSales').nextElementSibling.textContent=rangeText(ga);$('bSales').nextElementSibling.textContent=rangeText(gb);
+  $('salesChange').textContent=pct(pctChange(aa.sales,bb.sales));$('qtyChange').textContent=pct(pctChange(aa.qty,bb.qty));
+  const top=results.slice(0,20);
+  setChart('compareChart','bar',top.map(x=>x.name),[{label:`Period A sales (${rangeText(ga)})`,data:top.map(x=>x.as),backgroundColor:'#3267e9'},{label:`Period B sales (${rangeText(gb)})`,data:top.map(x=>x.bs),backgroundColor:'#18a88b'}]);
+  const key=$('compareBy').value,dim=$('compareBy').selectedOptions[0].textContent;
+  tableRows('compareRows',results,COMPARE_COLS,byKey(key,dim,()=>{
+    const A=[],B=[];
+    for(let i=0;i<rawRows.length;i++){const r=rawRows[i];if(pred&&!pred(r))continue;if(ga.test(r))A.push(r);if(gb.test(r))B.push(r)}
+    return {A,B,la:'Period A',lb:'Period B',scope:`Comparison • Period A: ${rangeText(ga)} • Period B: ${rangeText(gb)}`};
+  }));
+}
+
+const renderers={overview:renderOverview,products:renderProducts,stores:renderStores,menumix:renderMenuMix,sizes:renderSizes,compare:runComparison};
+/* Size Mix % inside the Comparison view: same periods and filters as the comparison above */
+let cmpSizeGroup='hot';
+function switchCmpSizeGroup(g){
+  cmpSizeGroup=g;
+  ['hot','cold','joebox'].forEach(k=>$('cmpSz_'+k).classList.toggle('active',k===g));
+  if(rawRows.length)renderCompareSizes();
+}
+const ptsTxt=v=>`${v>0?'+':''}${Number(v||0).toFixed(1)} pts`;
+function renderCompareSizes(){
+  if(!rawRows.length)return;
+  const fAms=toSet(getSelectedMulti('cfAM')),labels=getSelectedMulti('cfStore'),fStores=labels.length?new Set(labels.map(l=>idx.codeByLabel.get(l))):null;
+  const fCats=toSet(getSelectedMulti('cfCat')),fSubs=toSet(getSelectedMulti('cfSub'));
+  const pred=(fAms||fStores||fCats||fSubs)?r=>(!fAms||fAms.has(r.__manager))&&(!fStores||fStores.has(r.__storeId))&&(!fCats||fCats.has(r.__category))&&(!fSubs||fSubs.has(r.__sub)):null;
+  const ga=periodRange('a'),gb=periodRange('b'),bit=SG_BIT[cmpSizeGroup]||0,grpName=SIZE_GROUP_LABEL[cmpSizeGroup];
+  const sizes=new Map(),stores=new Map(),A={qty:0,sales:0},B={qty:0,sales:0},rowsA=[],rowsB=[];
+  for(let i=0;i<rawRows.length;i++){const r=rawRows[i];
+    if(!r.__y||!(r.__sg&bit))continue;
+    if(pred&&!pred(r))continue;
+    const inA=ga.test(r),inB=gb.test(r);if(!inA&&!inB)continue;
+    const name=String(r.__size||'Unmapped');
+    let s=sizes.get(name);if(!s)sizes.set(name,s={name,aq:0,bq:0,as:0,bs:0});
+    let st=stores.get(r.__store);if(!st)stores.set(r.__store,st={name:r.__store,aq:0,bq:0,as:0,bs:0,a:new Map(),b:new Map()});
+    if(inA){s.aq+=r.__qty;s.as+=r.__sales;A.qty+=r.__qty;A.sales+=r.__sales;st.aq+=r.__qty;st.as+=r.__sales;st.a.set(name,(st.a.get(name)||0)+r.__qty);rowsA.push(r)}
+    if(inB){s.bq+=r.__qty;s.bs+=r.__sales;B.qty+=r.__qty;B.sales+=r.__sales;st.bq+=r.__qty;st.bs+=r.__sales;st.b.set(name,(st.b.get(name)||0)+r.__qty);rowsB.push(r)}
+  }
+  const list=[...sizes.values()].sort((x,y)=>(y.bq-x.bq)||(y.aq-x.aq));
+  $('cmpSizeNote').textContent=`${grpName} • Period A: ${fmt(A.qty)} units • Period B: ${fmt(B.qty)} units`;
+  setChart('cmpSizeChart','bar',list.map(x=>x.name),[
+    {label:`Period A qty % (${rangeText(ga)})`,data:list.map(x=>share(x.aq,A.qty)),suffix:'%',backgroundColor:'#3267e9'},
+    {label:`Period B qty % (${rangeText(gb)})`,data:list.map(x=>share(x.bq,B.qty)),suffix:'%',backgroundColor:'#18a88b'}]);
+  const ctx=()=>({A:rowsA,B:rowsB,la:'Period A',lb:'Period B',scope:`Comparison • Size Mix % (${grpName}) • Period A: ${rangeText(ga)} • Period B: ${rangeText(gb)}`});
+  const dq=r=>share(r.bq,B.qty)-share(r.aq,A.qty),ds=r=>share(r.bs,B.sales)-share(r.as,A.sales);
+  tableRows('cmpSizeRows',list,[
+    {k:'name'},
+    {k:'aq',num:true},{num:true,v:r=>pct(share(r.aq,A.qty))},
+    {k:'bq',num:true},{num:true,v:r=>pct(share(r.bq,B.qty))},
+    {num:true,v:r=>ptsTxt(dq(r)),cls:r=>chgCls(Math.round(dq(r)*10))},
+    {num:true,v:r=>pct(share(r.as,A.sales))},{num:true,v:r=>pct(share(r.bs,B.sales))},
+    {num:true,v:r=>ptsTxt(ds(r)),cls:r=>chgCls(Math.round(ds(r)*10))}
+  ],byKey('__size','Size',ctx));
+  // store-wise: each size as Period A % -> Period B % of that store's units
+  const cols=list.map(x=>x.name).sort();
+  $('cmpStoreSizeHead').innerHTML='<tr><th>Store</th><th class="num">A Qty</th><th class="num">B Qty</th>'+cols.map(c=>`<th class="num">${esc(c)} %</th>`).join('')+'</tr>';
+  const storeList=[...stores.values()].sort((x,y)=>(y.bq-x.bq)||(y.aq-x.aq));
+  const cell=(r,c)=>{const a=share((r.a&&r.a.get(c))||0,r.aq),b=share((r.b&&r.b.get(c))||0,r.bq),d=b-a;
+    return `${pct(a)} → ${pct(b)} <span class="${chgCls(Math.round(d*10))}">(${d>0?'+':''}${d.toFixed(1)})</span>`};
+  tableRows('cmpStoreSizeRows',storeList,[{k:'name'},{k:'aq',num:true},{k:'bq',num:true}].concat(cols.map(c=>({num:true,v:r=>cell(r,c),html:x=>x}))),byKey('__store','Store',ctx));
+}
+// load any month the two periods need (not loaded yet) before comparing
+async function runFullComparison(){
+  if(!rawRows.length)return;
+  const a=periodRange('a'),b=periodRange('b');
+  try{await ensureMonths([...monthsInRange(a.from,a.to),...monthsInRange(b.from,b.to)])}catch(e){}
+  runComparison();renderCompareSizes();
+}
+renderers.compare=runFullComparison;
+$('compareBtn').addEventListener('click',runFullComparison);
+
+
+document.querySelectorAll('th.sortable').forEach(th=>{
+  th.addEventListener('click',()=>{
+    const table=th.dataset.sort;
+    if(currentSort.table===table)currentSort.dir*=-1;else{currentSort.table=table;currentSort.dir=-1}
+    markDirty('overview');renderActive();
+  });
+});
+
+// Navigation
+const TITLES={upload:'Data Ingestion',overview:'Menu Mix Dashboard',products:'Product Performance',stores:'Store Performance',menumix:'Menu Mix',sizes:'Size Mix %',compare:'Comparison View',mapping:'Category Mapping',allocation:'Store Allocation'};
+const SUBTITLES={upload:'Upload your Menu Mix file to build the dashboard. Category and store mappings are built in.',overview:'Overview of sales and performance across all dimensions.'};
+function showView(view){
+  activeView=view;
+  document.querySelectorAll('.navitem[data-view]').forEach(b=>b.classList.toggle('active',b.dataset.view===view));
+  document.querySelectorAll('.view').forEach(v=>v.classList.toggle('active',v.id==='view-'+view));
+  $('globalFiltersBar').style.display=GLOBAL_VIEWS.includes(view)?'block':'none';
+  $('pageTitle').textContent=TITLES[view]||'Menu Mix Dashboard';
+  $('pageSubtitle').textContent=SUBTITLES[view]||'Explore sales and unit mix by product, store, category and area manager.';
+  // put the action buttons into the open view's filter bar, next to its toggle
+  const slot=(GLOBAL_VIEWS.includes(view)?$('globalFiltersBar'):$('view-'+view))?.querySelector('.actions-slot');
+  if(slot&&slot!==$('topActions').parentElement)slot.appendChild($('topActions'));
+  $('gfTitle').textContent=TITLES[view]||'Filters';
+  $('topActions').classList.toggle('hidden',!rawRows.length||!slot);
+  $('topCmp').classList.toggle('hidden',!MODAL[view]);
+  $('exportBtn').classList.toggle('hidden',!GLOBAL_VIEWS.includes(view));
+  renderActive();
+}
+document.querySelectorAll('.navitem[data-view]').forEach(btn=>btn.addEventListener('click',()=>showView(btn.dataset.view)));
+
+/* =========================================
+   2-MONTH COMPARISON POPUP — mirrors the module it is opened from
+   ========================================= */
+const SIZE_GROUP_LABEL={hot:'Hot',cold:'Cold',joebox:'Joe Box'};
+const CA='#3267e9',CB='#18a88b';
+let modalView='overview';
+const M={la:'',lb:'',laFull:'',lbFull:''}; // month labels of the open comparison
+// the module's own filters, without its year/month/day part (the popup picks the months)
+function moduleRowFilter(view){
+  if(view==='sizes'){const f=sizeFilters,bit=SG_BIT[currentSizeGroup]||0;return r=>(r.__sg&bit)&&(!f.ams||f.ams.has(r.__manager))&&(!f.stores||f.stores.has(r.__store))}
+  const f=globalFilters;
+  return r=>(!f.ams||f.ams.has(r.__manager))&&(!f.stores||f.stores.has(r.__store))&&(!f.cats||f.cats.has(r.__category))&&(!f.subs||f.subs.has(r.__sub))&&(!f.sizes||f.sizes.has(r.__size))&&(!f.prods||f.prods.has(r.__longName));
+}
+const ymLabel=(ym,short)=>ym?`${short?MONTHS[+ym.slice(5,7)-1].slice(0,3):MONTHS[+ym.slice(5,7)-1]} ${ym.slice(0,4)}`:'—';
+
+// ---- skeleton pieces (same building blocks the modules use) ----
+const mKpis=labels=>`<div class="kpis">${labels.map((l,i)=>`<div class="kpi"><div class="label">${l}</div><div class="value mval" id="mK${i}">—</div><div class="hint" id="mK${i}h"></div></div>`).join('')}</div>`;
+const mHead=(title,sub)=>`<div class="panel-head"><h3>${title}</h3><span>${sub||''}</span></div>`;
+const mChartBox=(id,h)=>`<div class="chartbox" style="height:${h}px"><canvas id="${id}"></canvas></div>`;
+const mTableEl=id=>`<div class="table-wrap"><table><thead id="${id}Head"></thead><tbody id="${id}Rows"></tbody></table></div>`;
+const mDual=(id,h=260)=>`<div class="split"><div><div class="mlabel" id="${id}AL"></div>${mChartBox(id+'A',h)}</div><div><div class="mlabel" id="${id}BL"></div>${mChartBox(id+'B',h)}</div></div>`;
+const mPanel=(title,sub,inner)=>`<div class="panel mgap">${mHead(title,sub)}${inner}</div>`;
+const mTablePanel=(id,title,sub)=>`<div class="table-panel mgap">${mHead(title,sub)}${mTableEl(id)}</div>`;
+const mChartTable=(id,title,sub,chartHtml)=>`<div class="panel chart-with-table mgap"><div class="chart-col">${mHead(title,sub)}${chartHtml}</div><div class="table-col">${mTableEl(id)}</div></div>`;
+
+// ---- data + fill helpers ----
+function pairGroups(A,B,key){
+  const m=new Map();
+  groupBy(A,key).forEach(g=>m.set(g.name,{name:g.name,first:g.first,aq:g.qty,as:g.sales,bq:0,bs:0}));
+  groupBy(B,key).forEach(g=>{let x=m.get(g.name);if(!x)m.set(g.name,x={name:g.name,first:g.first,aq:0,as:0,bq:0,bs:0});x.bq=g.qty;x.bs=g.sales});
+  return [...m.values()].sort((x,y)=>(y.bs-x.bs)||(y.as-x.as));
+}
+const chgCls=v=>v>0?'cf-high':v<0?'cf-low':'';
+const D_COLS=[
+  {num:true,v:r=>fmt(r.aq)},{num:true,v:r=>fmt(r.bq)},{num:true,v:r=>pct(pctChange(r.aq,r.bq)),cls:r=>chgCls(pctChange(r.aq,r.bq))},
+  {num:true,v:r=>money(r.as)},{num:true,v:r=>money(r.bs)},{num:true,v:r=>pct(pctChange(r.as,r.bs)),cls:r=>chgCls(pctChange(r.as,r.bs))}];
+function mTable(id,firstHeads,firstCols,list,drill){
+  $(id+'Head').innerHTML=`<tr>${firstHeads.map(h=>`<th>${esc(h)}</th>`).join('')}<th class="num">${M.la} Qty</th><th class="num">${M.lb} Qty</th><th class="num">Qty Change %</th><th class="num">${M.la} Sales</th><th class="num">${M.lb} Sales</th><th class="num">Sales Change %</th></tr>`;
+  tableRows(id+'Rows',list,[...firstCols,...D_COLS],drill);
+}
+function mKpi(i,a,b,change){
+  $('mK'+i).textContent=`${a} → ${b}`;
+  $('mK'+i+'h').textContent=`${M.la} → ${M.lb}`+(change===null||change===undefined?'':` • ${change>0?'+':''}${pct(change)}`);
+}
+/* MONTH-vs-MONTH BARS: rounded gradient bars side by side, a small ▲/▼ change % tag on the Month B bar,
+   and both months plus the change in the tooltip. */
+const cmpShort=v=>{const a=Math.abs(v);return a>=1e6?(v/1e6).toFixed(1).replace(/\.0$/,'')+'M':a>=1e3?(v/1e3).toFixed(1).replace(/\.0$/,'')+'K':fmt(v)};
+function cmpGrad(c,solid,soft,horizontal){
+  const ch=c.chart,a=ch.chartArea;if(!a)return solid;
+  const g=horizontal?ch.ctx.createLinearGradient(a.left,0,a.right,0):ch.ctx.createLinearGradient(0,a.bottom,0,a.top);
+  g.addColorStop(0,soft);g.addColorStop(1,solid);return g;
+}
+const cmpChg=(c)=>{const s=c.chart.canvas._cmp;if(!s)return null;const a=s.A[c.dataIndex],b=s.B[c.dataIndex];return a?(b-a)/a*100:null};
+function mBars(id,list,n,horizontal,key='s'){
+  const canvas=$(id);if(!canvas||typeof Chart==='undefined')return;
+  const top=list.slice(0,n),labels=top.map(x=>x.name),A=top.map(x=>x['a'+key]),B=top.map(x=>x['b'+key]);
+  const val=v=>key==='q'?fmt(v):money(v),thick=horizontal?12:26;
+  const ds=[
+    {label:M.laFull||M.la,data:A,backgroundColor:c=>cmpGrad(c,CA,'rgba(50,103,233,.45)',horizontal),hoverBackgroundColor:CA,borderRadius:7,borderSkipped:false,maxBarThickness:thick,datalabels:{display:false}},
+    {label:M.lbFull||M.lb,data:B,backgroundColor:c=>cmpGrad(c,CB,'rgba(24,168,139,.45)',horizontal),hoverBackgroundColor:CB,borderRadius:7,borderSkipped:false,maxBarThickness:thick}];
+  canvas._cmp={A,B}; // both months' values, for the change tags and tooltip
+  if(horizontal){const h=Math.max(260,top.length*30+60),box=canvas.parentElement;box.style.height=h+'px';box.style.setProperty('--h',h+'px')} // room for every bar pair
+  const ex=charts[id];
+  if(ex){ex.data.labels=labels;ex.data.datasets=ds;ex.update('none');return}
+  const cut=s=>{s=String(s);return s.length>24?s.slice(0,23)+'…':s};
+  const ch=charts[id]=new Chart(canvas,{type:'bar',data:{labels,datasets:ds},plugins:[ChartDataLabels],options:{
+    responsive:true,maintainAspectRatio:false,animation:{duration:400},indexAxis:horizontal?'y':'x',
+    layout:{padding:{top:horizontal?2:24,right:horizontal?58:6,left:2}},
+    interaction:{mode:'index',intersect:false},
+    datasets:{bar:{categoryPercentage:.74,barPercentage:.88}},
+    plugins:{
+      legend:{position:'top',align:'end',labels:{usePointStyle:true,pointStyle:'rectRounded',boxWidth:10,boxHeight:10,padding:14,color:'#52637a',font:{size:11,weight:'600'}}},
+      tooltip:{backgroundColor:'rgba(15,23,42,.94)',padding:11,cornerRadius:10,usePointStyle:true,boxPadding:5,titleFont:{size:12,weight:'700'},bodyFont:{size:12},footerFont:{size:12,weight:'700'},
+        callbacks:{label:c=>` ${c.dataset.label}: ${val(c.parsed[horizontal?'x':'y'])}`,
+          footer:items=>{const d=items.length&&cmpChg(items[0]);return d===null||d===false||d===undefined?'':`Change: ${d>0?'+':''}${d.toFixed(1)}%`}}},
+      datalabels:{display:c=>cmpChg(c)!==null,anchor:'end',align:horizontal?'right':'top',offset:3,clamp:true,
+        formatter:(v,c)=>{const d=cmpChg(c);return `${d>=0?'▲':'▼'} ${Math.abs(d).toFixed(1)}%`},
+        color:c=>cmpChg(c)>=0?'#0f7a64':'#c2410c',
+        backgroundColor:c=>cmpChg(c)>=0?'rgba(24,168,139,.13)':'rgba(240,120,120,.16)',
+        borderRadius:999,padding:{top:2,bottom:2,left:6,right:6},font:{size:9.5,weight:'700'}}
+    },
+    scales:{
+      [horizontal?'y':'x']:{grid:{display:false},border:{display:false},ticks:{color:'#52637a',font:{size:10,weight:'500'},autoSkip:!horizontal,maxRotation:horizontal?0:35,callback:function(v){return cut(this.getLabelForValue(v))}}},
+      [horizontal?'x':'y']:{beginAtZero:true,grace:'10%',border:{display:false},grid:{color:'rgba(148,163,184,.18)',drawTicks:false},ticks:{color:'#8a97a9',font:{size:10},padding:6,callback:v=>cmpShort(v)}}
+    }}});
+}
+// two doughnuts side by side (one per month), same slice order and colours in both
+function mDonuts(id,list,n,key='s',asShare=false){
+  const top=list.slice(0,n),names=top.map(x=>x.name);
+  [['A','a',M.laFull],['B','b',M.lbFull]].forEach(([P,p,label])=>{
+    const k=p+key,total=list.reduce((t,x)=>t+x[k],0);
+    $(id+P+'L').textContent=label;
+    setChart(id+P,'doughnut',names,[asShare?{label:label+' %',data:top.map(x=>share(x[k],total)),suffix:'%'}:{label,data:top.map(x=>x[k])}]);
+  });
+}
+const uniqCount=(rows,f)=>{const s=new Set();for(let i=0;i<rows.length;i++){const v=f(rows[i]);if(v)s.add(v)}return s.size};
+
+// ---- one layout per module ----
+const MODAL={
+  overview:{
+    html:()=>mKpis(['Sales / Amount','Units Sold','Active Stores','Unique Products'])
+      +mChartTable('mtCat','Category Comparison','',mChartBox('mc_cat',260))
+      +`<div class="panel mgap">${mHead('Area Manager Contribution','')}${mDual('mc_am')}<div style="height:14px"></div>${mTableEl('mtAM')}</div>`
+      +mChartTable('mtStore','Store Contribution','Top 15',mChartBox('mc_store',260))
+      +mPanel('Trend','By day of month',mChartBox('mc_trend',300)),
+    fill(A,B,aa,bb){
+      const q=currentMetric!=='sales',key=q?'q':'s';
+      mKpi(0,money(aa.sales),money(bb.sales),pctChange(aa.sales,bb.sales));
+      mKpi(1,fmt(aa.qty),fmt(bb.qty),pctChange(aa.qty,bb.qty));
+      mKpi(2,fmt(uniqCount(A,r=>r.__storeId||r.__store)),fmt(uniqCount(B,r=>r.__storeId||r.__store)));
+      mKpi(3,fmt(uniqCount(A,r=>r.__item)),fmt(uniqCount(B,r=>r.__item)));
+      const cats=pairGroups(A,B,'__category'),ams=pairGroups(A,B,'__manager'),stores=pairGroups(A,B,'__store');
+      if(q)[cats,ams,stores].forEach(l=>l.sort((x,y)=>(y.bq-x.bq)||(y.aq-x.aq)));
+      mBars('mc_cat',cats,10,false,key);mTable('mtCat',['Category'],[{k:'name'}],cats,byKey('__category','Category',modalCtx));
+      mDonuts('mc_am',ams,10,key);mTable('mtAM',['Area Manager'],[{k:'name'}],ams,byKey('__manager','Area Manager',modalCtx));
+      mBars('mc_store',stores,15,true,key);mTable('mtStore',['Store'],[{k:'name'}],stores,byKey('__store','Store',modalCtx));
+      const da=new Array(32).fill(0),db=new Array(32).fill(0);
+      A.forEach(r=>da[r.__d]+=q?r.__qty:r.__sales);B.forEach(r=>db[r.__d]+=q?r.__qty:r.__sales);
+      const days=[];for(let d=1;d<=31;d++)if(da[d]||db[d])days.push(d);
+      setChart('mc_trend','line',days.map(String),[{label:M.la,data:days.map(d=>da[d]),borderColor:CA,backgroundColor:'rgba(50,103,233,.10)'},{label:M.lb,data:days.map(d=>db[d]),borderColor:CB,backgroundColor:'rgba(24,168,139,.10)'}]);
+    }
+  },
+  products:{
+    html:()=>mPanel('Product Performance','Top 20 by sales',mChartBox('mc_prod',460))+mTablePanel('mtProd','Product performance detail','<span id="mtProdCount"></span>'),
+    fill(A,B){
+      const list=pairGroups(A,B,'__product');let rank=0;
+      mBars('mc_prod',list,20,true);$('mtProdCount').textContent=`${fmt(list.length)} products`;
+      mTable('mtProd',['Rank','Item Code','Product','Size','Category'],[{v:()=>++rank},{v:r=>r.first.__item},{k:'name'},{v:r=>r.first.__size},{v:r=>r.first.__category}],list,byKey('__product','Product',modalCtx));
+    }
+  },
+  stores:{
+    html:()=>mPanel('Store Performance','Top 25 by sales',mChartBox('mc_storeperf',460))+mTablePanel('mtStorePerf','Store performance detail','<span id="mtStorePerfCount"></span>'),
+    fill(A,B){
+      const list=pairGroups(A,B,'__store');let rank=0;
+      mBars('mc_storeperf',list,25,true);$('mtStorePerfCount').textContent=`${fmt(list.length)} stores`;
+      mTable('mtStorePerf',['Rank','Store ID','Store','Area Manager'],[{v:()=>++rank},{v:r=>r.first.__storeId},{k:'name'},{v:r=>r.first.__manager}],list,byKey('__store','Store',modalCtx));
+    }
+  },
+  menumix:{
+    html:()=>`<div class="panel mgap">${mHead('Category sales mix','Amount')}${mDual('mc_mixcat')}</div>`
+      +mPanel('Sub-category sales mix','Top 20',mChartBox('mc_sub',420))
+      +mTablePanel('mtMix','Menu mix detail','Product contribution'),
+    fill(A,B){
+      mDonuts('mc_mixcat',pairGroups(A,B,'__category'),12);
+      mBars('mc_sub',pairGroups(A,B,'__sub'),20,true);
+      mTable('mtMix',['Item Code','Product','Category','Sub Category','Size'],[{k:'name'},{v:r=>r.first.__product},{v:r=>r.first.__category},{v:r=>r.first.__sub},{v:r=>r.first.__size}],pairGroups(A,B,'__item'),
+        {dim:'Product',ctx:modalCtx,label:r=>`${r.first.__product} (${r.name})`,match:r=>x=>x.__item===r.name});
+    }
+  },
+  sizes:{
+    html:()=>mKpis(['Active Sizes','Top size by units','Top size quantity %','Total units'])
+      +`<div class="panel mgap">${mHead('Size mix % by quantity','Share of units')}${mDual('mc_szq')}</div>`
+      +`<div class="panel mgap">${mHead('Size mix % by sales','Share of sales')}${mDual('mc_szs')}</div>`
+      +mTablePanel('mtSize','Size contribution table','Filtered by Size Group')
+      +mTablePanel('mtStoreSize','Store-wise Size Breakdown',"% of each store's total qty"),
+    fill(A,B,aa,bb){
+      const sizes=pairGroups(A,B,'__size').sort((x,y)=>(y.bq-x.bq)||(y.aq-x.aq));
+      const topBy=k=>sizes.reduce((best,x)=>x[k]>(best?best[k]:0)?x:best,null);
+      const ta=topBy('aq'),tb=topBy('bq');
+      mKpi(0,fmt(sizes.filter(x=>x.aq>0).length),fmt(sizes.filter(x=>x.bq>0).length));
+      mKpi(1,ta?ta.name:'—',tb?tb.name:'—');
+      mKpi(2,pct(ta?share(ta.aq,aa.qty):0),pct(tb?share(tb.bq,bb.qty):0));
+      mKpi(3,fmt(aa.qty),fmt(bb.qty),pctChange(aa.qty,bb.qty));
+      mDonuts('mc_szq',sizes,12,'q',true);mDonuts('mc_szs',sizes,12,'s',true);
+      const la=M.la,lb=M.lb,nh=t=>`<th class="num">${esc(t)}</th>`;
+      $('mtSizeHead').innerHTML=`<tr><th>Size</th>${[`${la} Qty`,`${la} Qty %`,`${lb} Qty`,`${lb} Qty %`,`${la} Sales`,`${la} Sales %`,`${lb} Sales`,`${lb} Sales %`].map(nh).join('')}</tr>`;
+      tableRows('mtSizeRows',sizes,[{k:'name'},{num:true,v:r=>fmt(r.aq)},{num:true,v:r=>pct(share(r.aq,aa.qty))},{num:true,v:r=>fmt(r.bq)},{num:true,v:r=>pct(share(r.bq,bb.qty))},{num:true,v:r=>money(r.as)},{num:true,v:r=>pct(share(r.as,aa.sales))},{num:true,v:r=>money(r.bs)},{num:true,v:r=>pct(share(r.bs,bb.sales))}],byKey('__size','Size',modalCtx));
+      // store-wise breakdown, both months
+      const sm=new Map(),rec=n=>{let x=sm.get(n);if(!x)sm.set(n,x={name:n,aq:0,bq:0,bs:0,sa:new Map(),sb:new Map()});return x};
+      A.forEach(r=>{const x=rec(r.__store);x.aq+=r.__qty;x.sa.set(r.__size,(x.sa.get(r.__size)||0)+r.__qty)});
+      B.forEach(r=>{const x=rec(r.__store);x.bq+=r.__qty;x.bs+=r.__sales;x.sb.set(r.__size,(x.sb.get(r.__size)||0)+r.__qty)});
+      const names=sizes.map(x=>x.name).sort(),cols=[{k:'name'},{num:true,v:r=>fmt(r.aq)},{num:true,v:r=>fmt(r.bq)}];
+      names.forEach(s=>{cols.push({num:true,v:r=>pct(share(r.sa.get(s)||0,r.aq))});cols.push({num:true,v:r=>pct(share(r.sb.get(s)||0,r.bq))})});
+      $('mtStoreSizeHead').innerHTML=`<tr><th>Store</th>${nh(`${la} Total Qty`)}${nh(`${lb} Total Qty`)}${names.map(s=>nh(`${s} % ${la}`)+nh(`${s} % ${lb}`)).join('')}</tr>`;
+      tableRows('mtStoreSizeRows',[...sm.values()].sort((x,y)=>(y.bs-x.bs)||(y.aq-x.aq)),cols,byKey('__store','Store',modalCtx));
+    }
+  }
+};
+
+function openMonthCompare(){
+  if(!rawRows.length||!MODAL[activeView])return;
+  modalView=activeView;
+  const yms=AVAIL.length?AVAIL.slice():[...new Set(idx.dateList.map(d=>d.slice(0,7)))]; // every month in the database
+  const opts=yms.map(ym=>`<option value="${ym}">${ymLabel(ym)}</option>`).join('');
+  $('mA').innerHTML=opts;$('mB').innerHTML=opts;
+  if(yms.length){$('mA').value=yms[Math.max(0,yms.length-2)];$('mB').value=yms[yms.length-1]}
+  $('mFrom').value='';$('mTo').value='';
+  $('cmpTitle').textContent=`${TITLES[modalView]} — 2-month comparison`;
+  $('cmpSub').textContent=modalView==='sizes'
+    ?`Size group: ${SIZE_GROUP_LABEL[currentSizeGroup]}. Uses the Size Mix Area Manager and Store filters.`
+    :'Uses the current dashboard filters (Area Manager, Store, Category, Sub Category, Size, Product).';
+  // rebuild the popup's sections as a copy of this module's layout
+  Object.keys(charts).filter(k=>k.startsWith('mc_')).forEach(k=>{charts[k].destroy();delete charts[k]});
+  $('mSections').innerHTML=MODAL[modalView].html();
+  $('cmpModal').classList.remove('hidden');document.body.style.overflow='hidden';$('cmpModal').scrollTop=0;
+  renderMonthCompare();
+}
+function closeMonthCompare(){$('cmpModal').classList.add('hidden');document.body.style.overflow=''}
+function renderMonthCompare(){
+  const a=$('mA').value,b=$('mB').value;if(!a||!b)return;
+  if(AVAIL.length&&[a,b].some(ym=>!LOADED.has(ym))){ensureMonths([a,b]).then(renderMonthCompare,()=>{});return} // load the picked months first
+  const from=Math.max(0,parseInt($('mFrom').value,10)||0),to=Math.max(0,parseInt($('mTo').value,10)||0);
+  const mf=ym=>({y:new Set([+ym.slice(0,4)]),m:new Set([+ym.slice(5,7)]),from,to,any:true});
+  const fa=mf(a),fb=mf(b),pred=moduleRowFilter(modalView),A=[],B=[];
+  for(let i=0;i<rawRows.length;i++){const r=rawRows[i];if(!r.__y||!pred(r))continue;if(dateOK(r,fa))A.push(r);if(dateOK(r,fb))B.push(r)}
+  M.la=ymLabel(a,true);M.lb=ymLabel(b,true);M.laFull=ymLabel(a);M.lbFull=ymLabel(b);M.A=A;M.B=B;
+  MODAL[modalView].fill(A,B,aggregate(A),aggregate(B));
+  fitChartTables();
+}
+$('topCmp').addEventListener('click',openMonthCompare);
+$('cmpClose').addEventListener('click',closeMonthCompare);
+document.addEventListener('keydown',e=>{if(e.key==='Escape'&&!$('cmpModal').classList.contains('hidden')&&$('pwModal').classList.contains('hidden')&&$('drillModal').classList.contains('hidden'))closeMonthCompare()});
+['mA','mB'].forEach(id=>$(id).addEventListener('change',renderMonthCompare));
+['mFrom','mTo'].forEach(id=>$(id).addEventListener('input',debounce(renderMonthCompare,250)));
+
+/* =========================================
+   EXPORT PDF
+   The report starts below the filter bar. Every card (figures, chart, table) is placed
+   whole on a page; long tables are printed in full and only ever split between rows,
+   with the column headings repeated on the next page.
+   ========================================= */
+const PDF_LIBS=['https://cdn.jsdelivr.net/npm/html2canvas@1.4.1/dist/html2canvas.min.js','https://cdn.jsdelivr.net/npm/jspdf@2.5.1/dist/jspdf.umd.min.js'];
+const scriptLoads={};
+// PDF libraries are fetched only the first time a PDF is exported, so they don't slow page load
+function loadScript(src){return scriptLoads[src]||(scriptLoads[src]=new Promise((resolve,reject)=>{const s=document.createElement('script');s.src=src;s.onload=resolve;s.onerror=()=>{delete scriptLoads[src];reject(Error('could not load the PDF library (internet connection needed)'))};document.head.appendChild(s)}))}
+const exportName=(title,ext)=>`ViewX_${String(title).replace(/[^A-Za-z0-9]+/g,'_').replace(/^_|_$/g,'')}_${new Date().toISOString().slice(0,10)}.${ext}`;
+
+// the cards that make up a view, skipping filter bars, toolbars and notes
+function pdfBlocks(root){
+  const out=[];
+  (function walk(el){
+    for(const c of el.children){
+      if(c.matches('.filters,.toolbar,.compare-controls,.cmp-head,.note,.section-title,.footer,script,[data-html2canvas-ignore]'))continue;
+      if(getComputedStyle(c).display==='none')continue;
+      // chart beside a table: the chart, then the table at full page width (long tables then continue cleanly on the next pages)
+      if(c.matches('.chart-with-table')&&c.querySelector('.chart-col')&&c.querySelector('.table-col')){
+        out.push({el:c.querySelector('.chart-col'),wf:c.classList.contains('stacked')?1:.72});out.push(c.querySelector('.table-col'));continue}
+      if(c.matches('.kpis,.panel,.charts'))out.push(c);
+      else if(c.matches('.table-panel')){if(c.querySelector('.panel,.kpis,.table-panel'))walk(c);else out.push(c)}
+      else walk(c);
+    }
+  })(root);
+  return out;
+}
+// small heading for the first page: title, export time and the filters in force
+function pdfHeader(title,scopes,width,note){
+  const parts=[];
+  scopes.forEach(sc=>{
+    sc.querySelectorAll('.filter,.control').forEach(f=>{
+      const lab=f.querySelector('label');if(!lab)return;
+      const ms=f.querySelector('.ms-btn-text'),inp=f.querySelector(':scope>input,:scope>select');
+      if(!ms&&!inp)return;
+      const v=ms?ms.textContent:(inp.tagName==='SELECT'?(inp.selectedOptions[0]?inp.selectedOptions[0].textContent:''):inp.value);
+      if(v!==''&&!/^All\b/.test(v))parts.push([lab.textContent.trim(),v]);
+    });
+    sc.querySelectorAll('.metric-toggle button.active').forEach(b=>parts.push(['Showing',b.textContent.trim()]));
+  });
+  const d=document.createElement('div');
+  d.style.cssText=`position:absolute;left:-10000px;top:0;width:${Math.round(width)}px;padding:2px 2px 6px;background:#f4f7fb`;
+  d.innerHTML=`<div class="eyebrow">ViewX • Menu Mix Intelligence</div><div style="font-size:24px;font-weight:800;margin:6px 0 5px">${esc(title)}</div><div class="subtitle" style="line-height:1.6">Exported ${esc(new Date().toLocaleString())} • ${note?esc(note):parts.length?parts.map(p=>`<b>${esc(p[0])}:</b> ${esc(p[1])}`).join(' • '):'All data'}</div>`;
+  document.body.appendChild(d);
+  return d;
+}
+// picture of one card; tables are opened up to their full length first
+async function pdfCapture(el){
+  const info={rows:[],head:null};
+  const estimate=el.offsetHeight+el.querySelectorAll('tbody tr').length*34;
+  // a table wider than its card is printed with all its columns: the card is widened to the table's full width
+  let extra=0;el.querySelectorAll('.table-wrap').forEach(w=>{extra=Math.max(extra,w.scrollWidth-w.clientWidth)});
+  const fullW=Math.ceil(el.getBoundingClientRect().width+extra);
+  const canvas=await html2canvas(el,{scale:Math.max(1,Math.min(2,15000/Math.max(1,estimate),12000/Math.max(1,fullW))),backgroundColor:'#f4f7fb',logging:false,
+    windowWidth:Math.max(window.innerWidth,fullW+80),onclone:(doc,c)=>{
+    if(extra>0){c.style.width=fullW+'px';c.style.maxWidth='none'}
+    doc.querySelectorAll('style[id^="tblfz-"]').forEach(s=>s.remove()); // no frozen columns in the printed copy
+    c.querySelectorAll('.table-col').forEach(x=>{x.style.height='auto'});
+    c.querySelectorAll('.table-wrap').forEach(w=>{w.style.setProperty('max-height','none','important');w.style.overflow='visible';w.style.flex='none'});
+    c.querySelectorAll('tfoot td,th').forEach(x=>{x.style.position='static'}); // Total row and headings in normal flow for the picture
+    const tables=c.querySelectorAll('table');if(tables.length!==1)return;
+    const base=c.getBoundingClientRect(),th=tables[0].tHead;
+    if(th){const r=th.getBoundingClientRect();info.head={x:r.left-base.left,y:r.top-base.top,w:r.width,h:r.height}}
+    tables[0].querySelectorAll('tbody tr').forEach(tr=>info.rows.push(tr.getBoundingClientRect().bottom-base.top));
+    info.cssWidth=base.width;
+  }});
+  return {canvas,info};
+}
+async function exportPDF(root,title,btn,scopes,note){
+  const label=btn.textContent;btn.disabled=true;btn.textContent='Preparing PDF…';
+  let header=null;
+  try{
+    await Promise.all(PDF_LIBS.map(loadScript));
+    closeAllDropdowns();
+    const blocks=pdfBlocks(root);if(!blocks.length)throw Error('nothing to export in this view');
+    header=pdfHeader(title,scopes,Math.max(...blocks.map(b=>(b.el||b).getBoundingClientRect().width)),note);
+    const pdf=new window.jspdf.jsPDF({orientation:'landscape',unit:'pt',format:'a4'});
+    const pw=pdf.internal.pageSize.getWidth(),ph=pdf.internal.pageSize.getHeight(),margin=22,gap=10,iw=pw-2*margin,ih=ph-2*margin;
+    const paint=()=>{pdf.setFillColor(244,247,251);pdf.rect(0,0,pw,ph,'F')};
+    let y=margin;paint();
+    const newPage=()=>{pdf.addPage();paint();y=margin};
+    const put=(cv,w=iw)=>{const h=cv.height*(w/cv.width);pdf.addImage(cv.toDataURL('image/jpeg',0.92),'JPEG',margin+(iw-w)/2,y,w,h);y+=h};
+    const all=[header,...blocks];
+    for(let n=0;n<all.length;n++){
+      btn.textContent=`Preparing PDF… ${n+1}/${all.length}`;
+      const item=all[n],wf=item.wf||1,{canvas,info}=await pdfCapture(item.el||item);
+      const r=iw/canvas.width,hPt=canvas.height*r*wf;
+      if(hPt<=ph-margin-y)put(canvas,iw*wf);                  // fits on this page
+      else if(hPt<=ih){newPage();put(canvas,iw*wf)}           // fits on a fresh page
+      else if(!info.rows.length){newPage();put(canvas,iw*ih/hPt)} // tall card with no table: shrink to one page
+      else{                                                   // long table: split between rows only
+        const s=canvas.width/(info.cssWidth||canvas.width),breaks=info.rows.map(v=>Math.round(v*s));
+        const head=info.head&&{x:Math.floor(info.head.x*s),y:Math.floor(info.head.y*s),w:Math.ceil(info.head.w*s),h:Math.ceil(info.head.h*s)};
+        let top=0,first=true,guard=0;
+        if(ph-margin-y<150)newPage();
+        while(top<canvas.height-1&&guard++<500){
+          const headH=first||!head?0:head.h,maxPx=Math.floor((ph-margin-y)/r)-headH;
+          let end=0;
+          if(maxPx>0){
+            if(canvas.height-top<=maxPx)end=canvas.height;
+            else for(const b of breaks){if(b>top&&b<=top+maxPx)end=b;else if(b>top+maxPx)break}
+          }
+          if(!end){if(y>margin+1){newPage();continue}end=Math.min(canvas.height,top+Math.max(50,maxPx))}
+          const slice=document.createElement('canvas');slice.width=canvas.width;slice.height=headH+(end-top);
+          const g=slice.getContext('2d');g.fillStyle='#ffffff';g.fillRect(0,0,slice.width,slice.height);
+          if(headH)g.drawImage(canvas,head.x,head.y,head.w,head.h,head.x,0,head.w,head.h);
+          g.drawImage(canvas,0,top,canvas.width,end-top,0,headH,canvas.width,end-top);
+          put(slice);top=end;first=false;
+          if(canvas.height-top<40*s)break; // only the card's bottom edge is left
+          newPage();
+        }
+      }
+      y+=gap;
+    }
+    const pages=pdf.getNumberOfPages(),foot=String(title).replace(/[^\x20-\x7E]+/g,'-');
+    for(let i=1;i<=pages;i++){pdf.setPage(i);pdf.setFontSize(8);pdf.setTextColor(138,151,169);pdf.text(`ViewX - ${foot} - Page ${i} of ${pages}`,pw/2,ph-8,{align:'center'})}
+    pdf.save(exportName(title,'pdf'));
+  }catch(e){console.error(e);alert('Could not create the PDF: '+e.message)}
+  finally{if(header)header.remove();btn.disabled=false;btn.textContent=label}
+}
+$('topPdf').addEventListener('click',e=>exportPDF($('view-'+activeView),TITLES[activeView]||'Dashboard',e.currentTarget,GLOBAL_VIEWS.includes(activeView)?[$('globalFiltersBar'),$('view-'+activeView)]:[$('view-'+activeView)]));
+$('cmpPdf').addEventListener('click',e=>exportPDF($('cmpBody'),$('cmpTitle').textContent,e.currentTarget,[$('cmpBody')]));
+
+const CSV_COLS=[['Store ID','__storeId'],['Store Name','__store'],['Date','__date'],['Item Code','__item'],['Product','__product'],['Qty','__qty'],['Sales','__sales'],['Size','__size'],['Category','__category'],['Sub Category','__sub'],['Area Manager','__manager']];
+// rows -> CSV download; extra = [[heading, row=>value], ...] columns put in front
+function downloadCSV(rows,fileName,extra=[]){
+  const cols=[...extra,...CSV_COLS.map(([h,k])=>[h,r=>r[k]])];
+  const q=v=>'"'+String(v??'').replace(/"/g,'""')+'"';
+  // build in chunks so very large exports don't create one giant intermediate string
+  const parts=['\ufeff'+cols.map(c=>c[0]).join(',')+'\r\n'];let buf='';
+  for(let i=0;i<rows.length;i++){const r=rows[i];let line='';
+    for(let j=0;j<cols.length;j++)line+=(j?',':'')+q(cols[j][1](r));
+    buf+=line+'\r\n';if((i&8191)===8191){parts.push(buf);buf=''}}
+  parts.push(buf);
+  const blob=new Blob(parts,{type:'text/csv;charset=utf-8;'}),url=URL.createObjectURL(blob),a=document.createElement('a');
+  a.href=url;a.download=fileName;a.click();
+  setTimeout(()=>URL.revokeObjectURL(url),1000);
+}
+$('exportBtn').addEventListener('click',()=>{if(rawRows.length)downloadCSV(gc().rows,'ViewX_Menu_Mix_Analysis.csv')});
+// 2-month popup: the rows behind both months, Month A first, with a Month column
+$('cmpCsv').addEventListener('click',()=>{
+  if(!M.A)return;
+  const rows=[...M.A.map(r=>[M.laFull,r]),...M.B.map(r=>[M.lbFull,r])];
+  downloadCSV(rows.map(([m,r])=>({...r,__month:m})),exportName(`${TITLES[modalView]} ${M.la} vs ${M.lb}`,'csv'),[['Month',r=>r.__month]]);
+});
+
+$('resetBtn').addEventListener('click',()=>{
+  // clears the sales data only; the category and allocation mappings are kept
+  files={menu:null};
+  $('menuFile').value='';$('menuName').textContent='No file selected';
+  rawRows=[];idx=null;gcache=null;dirty.clear();dateCache.clear();
+  $('dashboard').classList.add('hidden');
+  $('buildBtn').disabled=true;
+  $('exportBtn').disabled=true;
+  setMessage(idleMessage(),!refReady());
+  Object.values(charts).forEach(c=>c.destroy());charts={};
+  showView('upload');
+  deleteFromDB('menu');deleteFromDB(CACHE_KEY);
+});
+// Libraries load with `defer`, so start once they are ready
+applyLockedMode();
+if(document.readyState==='loading')document.addEventListener('DOMContentLoaded',restoreFiles);else restoreFiles();
+</script><script>!function(){if(window.self===window.top)return;var P=["https://drcafe-bi.com","https://www.drcafe-bi.com"];document.addEventListener("keydown",function(e){if(e.altKey&&!e.ctrlKey&&!e.metaKey&&("KeyS"===e.code||"s"===e.key||"S"===e.key)){e.preventDefault();P.forEach(function(o){try{window.parent.postMessage({type:"viewx-toggle-menumix"},o)}catch(x){}})}},!0)}();</script>
+<style>.frame-ctrl{display:flex;align-items:center;gap:6px;margin-left:auto;flex-shrink:0}.userbox:not(.hidden)+.frame-ctrl{margin-left:0}.frame-ctrl .btn{width:34px;padding:0;font-size:15px;line-height:1}</style>
+<script>!function(){if(window.self===window.top)return;var P=["https://drcafe-bi.com","https://www.drcafe-bi.com"],nav=document.getElementById("topnav");if(!nav)return;function send(t){P.forEach(function(o){try{window.parent.postMessage({type:t},o)}catch(e){}})}var w=document.createElement("div");w.className="frame-ctrl";w.innerHTML='<button type="button" class="btn sm secondary" id="frameMin" title="Minimize (Alt+S)" aria-label="Minimize Menu Mix">&#8211;</button><button type="button" class="btn sm secondary" id="frameClose" title="Close Menu Mix" aria-label="Close Menu Mix">&#10005;</button>';nav.appendChild(w);w.querySelector("#frameMin").addEventListener("click",function(){send("viewx-minimize-menumix")});w.querySelector("#frameClose").addEventListener("click",function(){send("viewx-close-menumix")});send("viewx-frame-controls")}();</script>
+<script>
+/* SALES <-> MENU MIX LINK (v7.5)
+   The Sales dashboard (drcafe-bi.com) asks for one store's item sales in two periods, to explain a store's sales change.
+   Request : {type:'viewx-item-compare', id, store, a:{from:'YYYY-MM-DD',to}, b:{from,to}}
+   Replies : {type:'viewx-item-compare-ack', id}  straight away, then
+             {type:'viewx-item-compare-result', id, ok, error, storeName, a:{from,to,sales,qty}, b:{...}, items:[...]}
+   Period A is cut at the last day this store has Menu Mix data, and period B is cut to the same number of days,
+   so a part month is compared with the same days of the other month. Only this person's own stores are in rawRows. */
+(function(){
+  if(window.self===window.top)return;
+  var P=['https://drcafe-bi.com','https://www.drcafe-bi.com'];
+  function code(v){var s=String(v==null?'':v).trim();if(/^\d+\.0+$/.test(s))s=s.replace(/\.0+$/,'');return s.replace(/^0+(?=\d)/,'')}
+  function ymOf(d){return d.slice(0,7)}
+  function months(from,to){var out=[],y=+from.slice(0,4),m=+from.slice(5,7),ey=+to.slice(0,4),em=+to.slice(5,7);
+    while(y<ey||(y===ey&&m<=em)){out.push(y+'-'+String(m).padStart(2,'0'));if(++m>12){m=1;y++}}return out}
+  function addDays(d,n){var x=new Date(d+'T00:00:00Z');x.setUTCDate(x.getUTCDate()+n);return x.toISOString().slice(0,10)}
+  function dayDiff(a,b){return Math.round((Date.parse(b+'T00:00:00Z')-Date.parse(a+'T00:00:00Z'))/864e5)}
+  function okDate(d){return typeof d==='string'&&/^\d{4}-\d{2}-\d{2}$/.test(d)}
+  function waitForData(ms){
+    return new Promise(function(res,rej){var t0=Date.now();(function chk(){
+      if(rawRows.length)return res();
+      if(AVAIL.length===0&&typeof ME!=='undefined'&&ME&&Date.now()-t0>4000)return rej(Error('there is no Menu Mix data for your stores'));
+      if(Date.now()-t0>ms)return rej(Error('Menu Mix did not finish loading in time — open Menu Mix once, then try again'));
+      setTimeout(chk,400)})()})}
+  function compare(store,a,b){
+    var sc=code(store),mine=[],maxA='',name='';
+    for(var i=0;i<rawRows.length;i++){var r=rawRows[i];if(code(r.__storeId)!==sc)continue;mine.push(r);
+      if(!name)name=r.__store;if(r.__date>=a.from&&r.__date<=a.to&&r.__date>maxA)maxA=r.__date}
+    // line period B up with the days that period A really has data for
+    if(maxA&&maxA<a.to){var bTo=addDays(b.from,dayDiff(a.from,maxA));a={from:a.from,to:maxA};if(bTo<b.to)b={from:b.from,to:bTo}}
+    var m=new Map(),A={from:a.from,to:a.to,sales:0,qty:0},B={from:b.from,to:b.to,sales:0,qty:0};
+    for(var j=0;j<mine.length;j++){var x=mine[j],d=x.__date,k=d>=a.from&&d<=a.to?'a':d>=b.from&&d<=b.to?'b':'';if(!k)continue;
+      var it=m.get(x.__item);if(!it)m.set(x.__item,it={item:x.__item,name:x.__product,cat:x.__category,sub:x.__sub,qa:0,qb:0,sa:0,sb:0});
+      var q=+x.__qty||0,s=+x.__sales||0;
+      if(k==='a'){it.qa+=q;it.sa+=s;A.qty+=q;A.sales+=s}else{it.qb+=q;it.sb+=s;B.qty+=q;B.sales+=s}}
+    var items=[];m.forEach(function(v){if(v.sa||v.sb||v.qa||v.qb)items.push(v)});
+    return {storeName:name,found:mine.length>0,a:A,b:B,items:items};
+  }
+  window.__mmItemCompare=compare; // for testing in the browser console
+  /* v7.6 WASTE & MIX: daily sold qty and sales of the asked items, every store this person can see.
+     Request : {type:'viewx-item-daily', id, from, to, items:['721101',...]}
+     Reply   : {type:'viewx-item-daily-result', id, ok, stores:{id:name}, rows:[[store,item,'YYYY-MM-DD',qty,sales],...], days:{store:[dates with any sale]}} */
+  function daily(from,to,items){
+    var want=new Set((items||[]).map(String)),agg=new Map(),stores={},days={};
+    for(var i=0;i<rawRows.length;i++){var r=rawRows[i],d=r.__date;if(d<from||d>to)continue;
+      var s=code(r.__storeId);stores[s]||(stores[s]=r.__store);(days[s]||(days[s]=new Set())).add(d);
+      if(!want.has(String(r.__item)))continue;
+      var k=s+'\u0001'+r.__item+'\u0001'+d,x=agg.get(k);if(!x)agg.set(k,x=[s,String(r.__item),d,0,0]);x[3]+=+r.__qty||0;x[4]+=+r.__sales||0}
+    var dd={};Object.keys(days).forEach(function(s){dd[s]=[...days[s]].sort()});
+    return {stores:stores,rows:[...agg.values()],days:dd};
+  }
+  window.__mmItemDaily=daily;
+  window.addEventListener('message',function(e){
+    if(e.source!==window.parent||P.indexOf(e.origin)<0)return;
+    var q=e.data||{};if(q.type!=='viewx-item-daily')return;
+    var reply=function(o){o.id=q.id;try{window.parent.postMessage(o,e.origin)}catch(err){}};
+    reply({type:'viewx-item-compare-ack'});
+    (async function(){
+      try{
+        if(!okDate(q.from)||!okDate(q.to)||!Array.isArray(q.items))throw Error('bad request');
+        await waitForData(120000);
+        try{await ensureMonths(months(q.from,q.to))}catch(err){}
+        var r=daily(q.from,q.to,q.items);
+        reply({type:'viewx-item-daily-result',ok:true,stores:r.stores,rows:r.rows,days:r.days,
+          missing:months(q.from,q.to).filter(function(ym){return AVAIL.indexOf(ym)<0})});
+      }catch(err){reply({type:'viewx-item-daily-result',ok:false,error:String(err&&err.message||err)})}
+    })();
+  });
+  window.addEventListener('message',function(e){
+    if(e.source!==window.parent||P.indexOf(e.origin)<0)return;
+    var q=e.data||{};if(q.type!=='viewx-item-compare')return;
+    var reply=function(o){o.id=q.id;try{window.parent.postMessage(o,e.origin)}catch(err){}};
+    reply({type:'viewx-item-compare-ack'});
+    (async function(){
+      try{
+        if(!q.store||!q.a||!q.b||![q.a.from,q.a.to,q.b.from,q.b.to].every(okDate))throw Error('bad request');
+        await waitForData(120000);
+        var need=months(q.a.from,q.a.to).concat(months(q.b.from,q.b.to));
+        var missing=need.filter(function(ym){return AVAIL.indexOf(ym)<0});
+        try{await ensureMonths(need)}catch(err){}
+        var r=compare(q.store,{from:q.a.from,to:q.a.to},{from:q.b.from,to:q.b.to});
+        reply({type:'viewx-item-compare-result',ok:true,missing:missing,storeName:r.storeName,found:r.found,a:r.a,b:r.b,items:r.items});
+      }catch(err){reply({type:'viewx-item-compare-result',ok:false,error:String(err&&err.message||err)})}
+    })();
+  });
+})();
+</script>
+
+</body></html>
