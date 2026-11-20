@@ -2832,7 +2832,7 @@ if(document.readyState==='loading')document.addEventListener('DOMContentLoaded',
 })();
 </script>
 
-<!-- v8.1 THEME FROM THE SALES DASHBOARD
+<!-- v8.2 THEME FROM THE SALES DASHBOARD (v8.2: tables with pinned columns follow the theme too)
      Inside the Sales dashboard, this page takes the dashboard's colours and font (light, dark or emerald):
      the dashboard sends them with 'viewx-theme', and this page asks for them with 'viewx-need-theme'.
      Opened on its own, the page keeps its own look. -->
@@ -2895,6 +2895,16 @@ html.vx-themed.vx-dark .cf-high{color:var(--vx-success)}
 html.vx-themed.vx-dark .cf-med{color:var(--vx-warning)}
 html.vx-themed.vx-dark .cf-low{color:var(--vx-danger)}
 html.vx-themed .pw-overlay{background:rgba(0,0,0,.55)}
+/* tables with pinned columns: Menu Mix writes white / light blue for them (table[data-t] rules); keep them in the theme.
+   Opaque colours, so scrolled cells don't show through the pinned ones; highlight cells (cf-*) keep their colour. */
+html.vx-themed table[data-t] tbody td:not(.cf-high):not(.cf-med):not(.cf-low){background:var(--vx-surface)!important}
+html.vx-themed table[data-t] tbody tr:hover td:not(.cf-high):not(.cf-med):not(.cf-low){background:linear-gradient(var(--vx-primary-light),var(--vx-primary-light)),var(--vx-surface)!important}
+html.vx-themed table[data-t] thead th{background:var(--vx-surface-hover)!important}
+html.vx-themed table[data-t] thead th.ts-on{background:linear-gradient(var(--vx-primary-light),var(--vx-primary-light)),var(--vx-surface-hover)!important;color:var(--vx-primary)!important}
+html.vx-themed table[data-t] tfoot td{background:var(--vx-surface-hover)!important;color:var(--vx-text-main)}
+html.vx-themed.vx-dark table[data-t] .cf-high{background:var(--vx-success-light)!important}
+html.vx-themed.vx-dark table[data-t] .cf-med{background:var(--vx-warning-light)!important}
+html.vx-themed.vx-dark table[data-t] .cf-low{background:var(--vx-danger-light)!important}
 html.vx-themed ::-webkit-scrollbar-thumb{background:var(--vx-border-strong)}
 </style>
 <script>
