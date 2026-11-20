@@ -2832,4 +2832,102 @@ if(document.readyState==='loading')document.addEventListener('DOMContentLoaded',
 })();
 </script>
 
+<!-- v8.1 THEME FROM THE SALES DASHBOARD
+     Inside the Sales dashboard, this page takes the dashboard's colours and font (light, dark or emerald):
+     the dashboard sends them with 'viewx-theme', and this page asks for them with 'viewx-need-theme'.
+     Opened on its own, the page keeps its own look. -->
+<style>
+html.vx-themed{--bg:var(--vx-bg);--ink:var(--vx-text-main);--muted:var(--vx-text-muted);--line:var(--vx-border);--blue:var(--vx-primary);--teal:var(--vx-success);--navy:var(--vx-text-main);--shadow:var(--vx-shadow)}
+html.vx-themed body{font-family:var(--vx-font);background:var(--vx-bg);color:var(--vx-text-main)}
+html.vx-themed .topnav{background:var(--vx-bg-glass);border-bottom-color:var(--vx-border);box-shadow:none}
+html.vx-themed .topnav nav{background:var(--vx-surface-hover)}
+html.vx-themed .navitem{color:var(--vx-text-muted)}
+html.vx-themed .navitem:hover{background:var(--vx-surface);color:var(--vx-text-main)}
+html.vx-themed .navitem.active{background:var(--vx-primary);color:#fff;box-shadow:none}
+html.vx-themed.vx-dark .navitem.active{color:var(--vx-bg)}
+html.vx-themed .brand small,html.vx-themed .subtitle,html.vx-themed .kpi .hint,html.vx-themed .footer,html.vx-themed .empty,html.vx-themed .filter label{color:var(--vx-text-light)}
+html.vx-themed .upload-card,html.vx-themed .panel,html.vx-themed .table-panel,html.vx-themed .kpi,html.vx-themed .filters,html.vx-themed .pw-box,
+html.vx-themed .ms-dropdown,html.vx-themed .tbl-colmenu,html.vx-themed .status{background:var(--vx-surface);border-color:var(--vx-border);color:var(--vx-text-main);box-shadow:var(--vx-shadow)}
+html.vx-themed .cmp-overlay,html.vx-themed .cmp-body,html.vx-themed .login-overlay{background:var(--vx-bg)}
+html.vx-themed .btn.primary{background:var(--vx-primary);color:#fff}
+html.vx-themed.vx-dark .btn.primary{color:var(--vx-bg)}
+html.vx-themed .btn.secondary,html.vx-themed .tbl-colbtn{background:var(--vx-surface);border-color:var(--vx-border-strong);color:var(--vx-text-main)}
+html.vx-themed .btn.secondary:hover:not(:disabled),html.vx-themed .tbl-colbtn:hover{background:var(--vx-surface-hover);border-color:var(--vx-primary);color:var(--vx-primary)}
+html.vx-themed .metric-toggle{background:var(--vx-surface-hover);border-color:var(--vx-border)}
+html.vx-themed .metric-toggle button{color:var(--vx-text-muted)}
+html.vx-themed .metric-toggle button:not(.active):hover{background:var(--vx-surface);color:var(--vx-text-main)}
+html.vx-themed .metric-toggle button.active{background:var(--vx-primary);color:#fff;box-shadow:none}
+html.vx-themed.vx-dark .metric-toggle button.active{color:var(--vx-bg)}
+html.vx-themed .filter input[type="number"],html.vx-themed .filter input[type="text"],html.vx-themed .filter input[type="date"],html.vx-themed .filter select,
+html.vx-themed .ms-btn,html.vx-themed .control>select,html.vx-themed .control>input,html.vx-themed .ms-search input,html.vx-themed .pw-box input{background-color:var(--vx-surface);border-color:var(--vx-border-strong);color:var(--vx-text-main)}
+html.vx-themed.vx-dark input[type="date"]{color-scheme:dark}
+html.vx-themed .filter input:focus,html.vx-themed .filter select:focus,html.vx-themed .ms-btn:focus,html.vx-themed .ms-btn.open{border-color:var(--vx-primary);box-shadow:0 0 0 3px var(--vx-primary-light)}
+html.vx-themed .ms-actions{background:var(--vx-surface-hover);border-color:var(--vx-border)}
+html.vx-themed .ms-search{border-color:var(--vx-border)}
+html.vx-themed .ms-item:hover,html.vx-themed .tbl-colmenu label:hover{background:var(--vx-surface-hover)}
+html.vx-themed .tbl-colmenu label{color:var(--vx-text-main)}
+html.vx-themed .filters-head{border-color:var(--vx-border)}
+html.vx-themed .filters-title,html.vx-themed .panel-head h3,html.vx-themed .section-title{color:var(--vx-text-main)}
+html.vx-themed .panel-head span{background:var(--vx-surface-hover);color:var(--vx-text-muted)}
+html.vx-themed .kpi .label{color:var(--vx-text-muted)}
+html.vx-themed .table-wrap,html.vx-themed .chart-with-table .table-col .table-wrap{border-color:var(--vx-border)}
+html.vx-themed th{background:var(--vx-surface-hover);color:var(--vx-text-muted);border-color:var(--vx-border)}
+html.vx-themed th:hover{background:var(--vx-surface-hover);color:var(--vx-text-main)}
+html.vx-themed th.ts-on{background:var(--vx-primary-light)!important;color:var(--vx-primary)!important}
+html.vx-themed th .ts-ico{color:var(--vx-primary)}
+html.vx-themed td{color:var(--vx-text-main);border-color:var(--vx-border)}
+html.vx-themed tbody tr:nth-child(even) td{background:transparent}
+html.vx-themed tbody tr:hover td,html.vx-themed tbody.drillable tr:hover td{background:var(--vx-primary-light)}
+html.vx-themed tfoot td{background:var(--vx-surface-hover);border-top-color:var(--vx-border-strong);color:var(--vx-text-main)}
+html.vx-themed .pill{background:var(--vx-success-light);color:var(--vx-success)}
+html.vx-themed .upload-icon{background:var(--vx-primary-light);color:var(--vx-primary)}
+html.vx-themed .dropzone{background:var(--vx-bg);border-color:var(--vx-border-strong)}
+html.vx-themed .src-box{background:var(--vx-primary-light);border-color:var(--vx-border)}
+html.vx-themed .src-status{color:var(--vx-primary)}
+html.vx-themed .load-hint{background:var(--vx-warning-light);border-color:transparent;color:var(--vx-warning)}
+html.vx-themed .warning,html.vx-themed .pw-err,html.vx-themed .src-status.warning{color:var(--vx-danger)}
+html.vx-themed .navitem.src-pill{background:var(--vx-surface);color:var(--vx-text-main);box-shadow:none}
+html.vx-themed .navitem.src-pill.done:hover{background:var(--vx-surface-hover)}
+html.vx-themed .view-actions{border-color:var(--vx-border)}
+html.vx-themed .tbl-colacts{border-color:var(--vx-border)}
+html.vx-themed .tbl-colacts button,html.vx-themed .ms-actions button{color:var(--vx-primary)}
+html.vx-themed.vx-dark .cf-high{color:var(--vx-success)}
+html.vx-themed.vx-dark .cf-med{color:var(--vx-warning)}
+html.vx-themed.vx-dark .cf-low{color:var(--vx-danger)}
+html.vx-themed .pw-overlay{background:rgba(0,0,0,.55)}
+html.vx-themed ::-webkit-scrollbar-thumb{background:var(--vx-border-strong)}
+</style>
+<script>
+(function(){
+  if(window.self===window.top)return;
+  var P=['https://drcafe-bi.com','https://www.drcafe-bi.com'],root=document.documentElement,T=null;
+  // chart colours written in the chart code (light look) and what they become with the dashboard's theme
+  var MAP={'#52637a':'text-muted','#8a97a9':'text-light','#68788d':'text-muted','#edf1f6':'border','rgba(148,163,184,.18)':'border'},seen={};
+  function walk(o,depth){
+    if(!o||typeof o!=='object'||depth>6)return;
+    Object.keys(o).forEach(function(k){var v=o[k];
+      if(typeof v==='string'){var key=MAP[v]||seen[v];if(key&&T&&T.vars[key]){o[k]=T.vars[key];seen[T.vars[key]]=key}}
+      else if(v&&typeof v==='object'&&!Array.isArray(v)&&k!=='data'&&k!=='_parsed')walk(v,depth+1)})}
+  function chartsOn(){
+    if(!window.Chart||window.__vxChartPlugin)return;window.__vxChartPlugin=1;
+    Chart.register({id:'vxTheme',beforeUpdate:function(c){if(!T)return;var o=c.config&&c.config.options||c.options;if(!o)return;
+      walk(o.scales,0);o.plugins&&walk(o.plugins.legend,0);o.plugins&&walk(o.plugins.title,0)}});
+  }
+  function apply(d){
+    T=d;var v=d.vars||{};
+    Object.keys(v).forEach(function(k){v[k]&&root.style.setProperty('--vx-'+k,v[k])});
+    d.font&&root.style.setProperty('--vx-font',d.font);
+    root.classList.add('vx-themed');root.classList.toggle('vx-dark',!!d.dark);
+    chartsOn();
+    if(window.Chart){Chart.defaults.color=v['text-muted']||Chart.defaults.color;Chart.defaults.borderColor=v.border||Chart.defaults.borderColor;
+      try{Object.values(Chart.instances||{}).forEach(function(c){c.update('none')})}catch(e){}}
+  }
+  window.addEventListener('message',function(e){
+    if(e.source!==window.parent||P.indexOf(e.origin)<0)return;var d=e.data||{};
+    if(d.type==='viewx-theme'&&d.vars)apply(d)});
+  function ask(){P.forEach(function(o){try{window.parent.postMessage({type:'viewx-need-theme'},o)}catch(e){}})}
+  ask();document.readyState!=='complete'&&window.addEventListener('load',function(){ask();chartsOn()});
+})();
+</script>
+
 </body></html>
