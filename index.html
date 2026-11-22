@@ -760,6 +760,29 @@ window.addEventListener('message',e=>{
     setSrcStatus('Signed out. Sign in to the Sales dashboard to see Menu Mix.',true);
   }
 });
+/* v9.1 STORES NOT OPERATIONAL: stores the Sales dashboard admin marked "Not operational" (Actions > Store status)
+   are left out here too. Inside the Sales dashboard the list is sent with 'viewx-hidden-stores'; opened on its own,
+   it is read at sign-in. The last list is kept in this browser so the fast open leaves them out at once. */
+const HIDDEN_KEY='viewx-mm-hidden-stores';
+const hsCode=v=>{let s=String(v==null?'':v).trim();if(/^\d+\.0+$/.test(s))s=s.replace(/\.0+$/,'');return s.replace(/^0+(?=\d)/,'')};
+let HIDDEN_STORES=new Set((()=>{try{const a=JSON.parse(localStorage.getItem(HIDDEN_KEY)||'[]');return Array.isArray(a)?a:[]}catch(e){return[]}})().map(hsCode));
+function dropHiddenStores(){ // called at the start of every rebuild, so all views, filters and downloads leave them out
+  if(!HIDDEN_STORES.size||!rawRows.length)return;
+  let w=0;for(let i=0;i<rawRows.length;i++){const r=rawRows[i];if(!HIDDEN_STORES.has(hsCode(r.__storeId)))rawRows[w++]=r}
+  rawRows.length=w}
+function setHiddenStores(list){
+  const next=new Set((list||[]).map(x=>hsCode(x&&typeof x==='object'?x.code:x)).filter(Boolean));
+  try{localStorage.setItem(HIDDEN_KEY,JSON.stringify([...next]))}catch(e){}
+  if(next.size===HIDDEN_STORES.size&&[...next].every(c=>HIDDEN_STORES.has(c)))return;
+  const back=[...HIDDEN_STORES].some(c=>!next.has(c));HIDDEN_STORES=next;
+  if(!rawRows.length)return;
+  if(back){ // a store is operational again: its rows were dropped, so load everything again
+    Promise.resolve(deleteFromDB(CACHE_KEY)).catch(()=>{}).then(()=>location.reload());return}
+  try{rebuildKeepFilters()}catch(e){console.error(e)}}
+window.addEventListener('message',e=>{
+  if(!SHARED||e.source!==window.parent||!PARENT_ORIGINS.includes(e.origin))return;
+  const d=e.data||{};if(d.type==='viewx-hidden-stores'&&Array.isArray(d.codes))setHiddenStores(d.codes)});
+if(SHARED)PARENT_ORIGINS.forEach(o=>{try{window.parent.postMessage({type:'viewx-need-hidden-stores'},o)}catch(e){}});
 // Swaps a Sales dashboard sign-in for a Menu Mix session (the sales-sso function checks it with the Sales project)
 async function exchangeSalesToken(token){
   const res=await fetch(`${SUPABASE.url}/functions/v1/sales-sso`,{method:'POST',
@@ -1293,6 +1316,8 @@ $('loginForm').addEventListener('submit',async e=>{
     const {data,error}=await sales.auth.signInWithPassword({email:$('loginEmail').value.trim(),password:$('loginPass').value});
     if(error)throw error;
     await exchangeSalesToken(data.session.access_token);
+    try{const st=await sales.from('site_settings').select('inactive_stores').eq('id',1).maybeSingle(); // v9.1: stores not operational
+      if(!st.error&&st.data&&Array.isArray(st.data.inactive_stores))setHiddenStores(st.data.inactive_stores)}catch(e){}
     $('loginPass').value='';$('loginModal').classList.add('hidden');
     startAuthed();
   }catch(err){$('loginErr').textContent=/invalid login/i.test(errText(err))?'Wrong email or password.':'Could not sign in: '+errText(err)}
@@ -1568,6 +1593,7 @@ function finishBuild(msg,warn){
 
 /* One pass over the data to collect everything the filters need */
 function buildIndex(){
+  dropHiddenStores(); // v9.1
   const x={managers:new Set(),stores:new Set(),cats:new Set(),subs:new Set(),sizes:new Set(),prods:new Set(),dates:new Set(),storesByManager:new Map(),combos:new Map(),storeCodes:new Map(),codesByManager:new Map(),years:new Set(),months:new Set()};
   for(let i=0;i<rawRows.length;i++){const r=rawRows[i];
     x.managers.add(r.__manager);x.stores.add(r.__store);x.cats.add(r.__category);x.subs.add(r.__sub);x.sizes.add(r.__size);x.prods.add(r.__longName);
