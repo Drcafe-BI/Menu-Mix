@@ -812,7 +812,25 @@ let sbClient=null;
 function sb(){
   if(sbClient)return sbClient;
   if(!window.supabase||!window.supabase.createClient)throw Error('the Supabase library has not loaded (internet connection needed)');
-  return sbClient=window.supabase.createClient(SUPABASE.url,SUPABASE.anonKey,{auth:{persistSession:true,autoRefreshToken:true,storageKey:'viewx-mm-auth'}});
+  sbClient=window.supabase.createClient(SUPABASE.url,SUPABASE.anonKey,{auth:{persistSession:true,autoRefreshToken:true,storageKey:'viewx-mm-auth'}});
+  /* v8.5 AUTO RE-CONFIRM: Menu Mix's access check gets old after some hours (the Sales dashboard stays signed in).
+     Inside the Sales dashboard, a call refused for that reason takes a fresh sign-in from the dashboard,
+     confirms access again (sales-sso) and is tried once more, so nobody has to sign out and in again. */
+  const rpc0=sbClient.rpc.bind(sbClient);
+  sbClient.rpc=async(fn,args,opts)=>{
+    let r=await rpc0(fn,args,opts);
+    if(r&&r.error&&SHARED&&isAccessErr(r.error)){
+      try{await renewAccess();r=await rpc0(fn,args,opts)}catch(e){console.warn('Menu Mix: could not confirm access again',e)}
+    }
+    return r;
+  };
+  return sbClient;
+}
+const isAccessErr=e=>/confirm your access|JWT|expired|not signed in|sign in again|not authenticated/i.test(errText(e));
+let renewing=null;
+function renewAccess(){ // one at a time; parallel calls share it
+  if(!renewing)renewing=(async()=>{parentToken='';const tok=await salesTokenFromParent();await exchangeSalesToken(tok)})().finally(()=>{renewing=null});
+  return renewing;
 }
 // A downloaded copy carries both mappings inside it: they are permanent there, with no upload option.
 // With Supabase the mappings come from the database, so the file is locked the same way.
