@@ -585,12 +585,12 @@ tbody.drillable tr:hover td{background:#e3edff}
 
   <div class="table-panel">
     <div class="panel-head"><h3>Comparison detail</h3><span>Sales and quantity change</span></div>
-    <div class="table-wrap"><table><thead><tr><th>Dimension</th><th class="num">A Qty</th><th class="num">B Qty</th><th class="num">Qty Change %</th><th class="num">A Sales</th><th class="num">B Sales</th><th class="num">Sales Change %</th></tr></thead><tbody id="compareRows"></tbody></table></div>
+    <div class="table-wrap"><table><thead><tr><th>Dimension</th><th class="num">A Qty</th><th class="num">B Qty</th><th class="num">Qty Difference</th><th class="num">Qty Change %</th><th class="num">A Sales</th><th class="num">B Sales</th><th class="num">Sales Difference</th><th class="num">Sales Change %</th></tr></thead><tbody id="compareRows"></tbody></table></div>
   </div>
   <div class="table-panel" id="cmpSizePanel">
     <div class="panel-head"><h3>Size Mix % comparison</h3><div style="display:flex;align-items:center;gap:10px;flex-wrap:wrap"><span id="cmpSizeNote">Share of units, Period A vs Period B</span><div class="metric-toggle" title="Size group"><button type="button" id="cmpSz_hot" class="active" onclick="switchCmpSizeGroup('hot')">Hot</button><button type="button" id="cmpSz_cold" onclick="switchCmpSizeGroup('cold')">Cold</button><button type="button" id="cmpSz_joebox" onclick="switchCmpSizeGroup('joebox')">Joe Box</button></div></div></div>
     <div class="chartbox"><canvas id="cmpSizeChart"></canvas></div>
-    <div class="table-wrap"><table><thead><tr><th>Size</th><th class="num">A Qty</th><th class="num">A Qty %</th><th class="num">B Qty</th><th class="num">B Qty %</th><th class="num">Qty % change</th><th class="num">A Sales %</th><th class="num">B Sales %</th><th class="num">Sales % change</th></tr></thead><tbody id="cmpSizeRows"></tbody></table></div>
+    <div class="table-wrap"><table><thead><tr><th>Size</th><th class="num">A Qty</th><th class="num">A Qty %</th><th class="num">B Qty</th><th class="num">B Qty %</th><th class="num">Qty Difference</th><th class="num">Qty % change</th><th class="num">A Sales %</th><th class="num">B Sales %</th><th class="num">Sales % change</th></tr></thead><tbody id="cmpSizeRows"></tbody></table></div>
   </div>
 
   <div class="table-panel">
@@ -665,6 +665,10 @@ tbody.drillable tr:hover td{background:#e3edff}
         <div class="subtitle" id="cmpSub"></div>
       </div>
       <div class="top-actions" data-html2canvas-ignore="true">
+        <div class="metric-toggle" id="cmpModeTg" title="Show every chart as amounts, or as % of each month's total">
+          <button type="button" data-m="amt" class="active">Amount</button>
+          <button type="button" data-m="pct">%</button>
+        </div>
         <button class="btn sm secondary" id="cmpPdf">Export PDF</button>
         <button class="btn sm secondary" id="cmpCsv" title="Download the sales rows behind both months as a CSV file">Export filtered data (CSV)</button>
         <button class="btn sm primary" id="cmpClose">✕ Close</button>
@@ -1909,7 +1913,7 @@ function setChart(id,type,labels,datasets,horizontal=false){
       },
       scales:round?{}:{
         x:{grid:{display:false},ticks:{font:{size:9},maxRotation:horizontal?0:40,autoSkip:true}},
-        y:{beginAtZero:true,grid:{color:'#edf1f6'},ticks:{font:{size:9}}}
+        y:{beginAtZero:true,grid:{color:'#edf1f6'},ticks:{font:{size:9},...(horizontal?{}:{callback:function(v,i,t){const f=Chart.Ticks.formatters.numeric.call(this,v,i,t),d=this.chart.data.datasets[0];return d&&d.suffix==='%'?f+'%':f}})}}
       }
     },
     plugins:[ChartDataLabels]
@@ -2064,16 +2068,17 @@ const modalCtx=()=>({A:M.A||[],B:M.B||[],la:M.la,lb:M.lb,scope:`${TITLES[modalVi
 let DR=null; // what the open popup shows, kept for the Excel export
 function drillTable(id,title,cols,list){
   const tot=sumRows(list),isNum=c=>c.t!=='s';
-  const show=(c,v)=>c.t==='s'?esc(v??''):c.t==='n'?fmt(v):c.t==='m'?money(v):pct(v);
+  const show=(c,v)=>c.t==='s'?esc(v??''):c.t==='n'?fmt(v):c.t==='m'?money(v):c.t==='d'?sdiff(v):pct(v); // 'd' = signed difference (v9.4)
   const raw=(c,v)=>c.t==='s'?String(v??''):c.t==='p'||c.t==='c'?Math.round(v*10)/10:Math.round(v*100)/100;
+  const colored=c=>c.t==='c'||c.t==='d';
   let h=`<thead><tr>${cols.map(c=>`<th class="${isNum(c)?'num':''}">${esc(c.h)}</th>`).join('')}</tr></thead><tbody>`;
-  for(const r of list)h+='<tr>'+cols.map(c=>{const v=c.f(r);return `<td class="${isNum(c)?'num':''} ${c.t==='c'?chgCls(v):''}">${show(c,v)}</td>`}).join('')+'</tr>';
+  for(const r of list)h+='<tr>'+cols.map(c=>{const v=c.f(r);return `<td class="${isNum(c)?'num':''} ${colored(c)?chgCls(v):''}">${show(c,v)}</td>`}).join('')+'</tr>';
   if(!list.length)h+=`<tr><td colspan="${cols.length}" class="empty">No matching records</td></tr>`;
   h+='</tbody>';
   if(list.length)h+='<tfoot><tr>'+cols.map((c,j)=>`<td class="${isNum(c)?'num':''}">${j===0?'Total':isNum(c)?show(c,c.f(tot)):''}</td>`).join('')+'</tr></tfoot>';
   $(id).innerHTML=h;
   const dtb=$(id).tBodies[0]; // sorting, Columns and frozen columns for the popup tables too
-  if(dtb&&list.length){dtb.id=id+'Body';dtb._t={rows:list,cols:cols.map(c=>({num:isNum(c),html:x=>x})),cells:list.map(r=>cols.map(c=>show(c,c.f(r)))),clss:list.map(r=>cols.map(c=>c.t==='c'?chgCls(c.f(r)):'')),limit:1e9};tblEnhance(dtb);setTimeout(()=>tblDecorate(dtb),0)}
+  if(dtb&&list.length){dtb.id=id+'Body';dtb._t={rows:list,cols:cols.map(c=>({num:isNum(c),html:x=>x})),cells:list.map(r=>cols.map(c=>show(c,c.f(r)))),clss:list.map(r=>cols.map(c=>colored(c)?chgCls(c.f(r)):'')),limit:1e9};tblEnhance(dtb);setTimeout(()=>tblDecorate(dtb),0)}
   const aoa=[cols.map(c=>c.h),...list.map(r=>cols.map(c=>raw(c,c.f(r))))];
   if(list.length)aoa.push(cols.map((c,j)=>j===0?'Total':isNum(c)?raw(c,c.f(tot)):''));
   return {title,aoa};
@@ -2088,8 +2093,8 @@ function openDrill(spec,row){
   if(two){
     const A=c.A.filter(test),B=c.B.filter(test),aa=aggregate(A),bb=aggregate(B);
     am=pairGroups(A,B,'__manager');st=pairGroups(A,B,'__store');
-    cols=[{h:`${c.la} Qty`,t:'n',f:r=>r.aq},{h:`${c.lb} Qty`,t:'n',f:r=>r.bq},{h:'Qty Change %',t:'c',f:r=>pctChange(r.aq,r.bq)},
-          {h:`${c.la} Sales`,t:'m',f:r=>r.as},{h:`${c.lb} Sales`,t:'m',f:r=>r.bs},{h:'Sales Change %',t:'c',f:r=>pctChange(r.as,r.bs)}];
+    cols=[{h:`${c.la} Qty`,t:'n',f:r=>r.aq},{h:`${c.lb} Qty`,t:'n',f:r=>r.bq},{h:'Qty Difference',t:'d',f:r=>r.bq-r.aq},{h:'Qty Change %',t:'c',f:r=>pctChange(r.aq,r.bq)},
+          {h:`${c.la} Sales`,t:'m',f:r=>r.as},{h:`${c.lb} Sales`,t:'m',f:r=>r.bs},{h:'Sales Difference',t:'d',f:r=>r.bs-r.as},{h:'Sales Change %',t:'c',f:r=>pctChange(r.as,r.bs)}];
     kpis=[['Sales',aa.sales,bb.sales,'m'],['Units Sold',aa.qty,bb.qty,'n'],['Area Managers',uniqCount(A,r=>r.__manager),uniqCount(B,r=>r.__manager),'n'],['Stores',uniqCount(A,storeKey),uniqCount(B,storeKey),'n']];
   }else{
     const R=c.rows.filter(test),T=aggregate(R),bySales=(x,y)=>y.sales-x.sales;
@@ -2291,7 +2296,7 @@ function compareCompute(pred,key,fA,fB){
     if(inB){x.bq+=r.__qty;x.bs+=r.__sales;bb.qty+=r.__qty;bb.sales+=r.__sales}}
   return {aa,bb,results:[...m.values()].sort((x,y)=>y.bs-x.bs)};
 }
-const COMPARE_COLS=[{k:'name'},{k:'aq',num:true},{k:'bq',num:true},{num:true,v:r=>pct(pctChange(r.aq,r.bq))},{num:true,v:r=>money(r.as)},{num:true,v:r=>money(r.bs)},{num:true,v:r=>pct(pctChange(r.as,r.bs))}];
+const COMPARE_COLS=[{k:'name'},{k:'aq',num:true},{k:'bq',num:true},{num:true,v:r=>sdiff(r.bq-r.aq),cls:r=>chgCls(r.bq-r.aq)},{num:true,v:r=>pct(pctChange(r.aq,r.bq))},{num:true,v:r=>money(r.as)},{num:true,v:r=>money(r.bs)},{num:true,v:r=>sdiff(r.bs-r.as),cls:r=>chgCls(r.bs-r.as)},{num:true,v:r=>pct(pctChange(r.as,r.bs))}];
 
 function runComparison(){
   if(!rawRows.length)return;
@@ -2350,18 +2355,18 @@ function renderCompareSizes(){
   tableRows('cmpSizeRows',list,[
     {k:'name'},
     {k:'aq',num:true},{num:true,v:r=>pct(share(r.aq,A.qty))},
-    {k:'bq',num:true},{num:true,v:r=>pct(share(r.bq,B.qty))},
+    {k:'bq',num:true},{num:true,v:r=>pct(share(r.bq,B.qty))},diffCol('aq','bq'),
     {num:true,v:r=>ptsTxt(dq(r)),cls:r=>chgCls(Math.round(dq(r)*10))},
     {num:true,v:r=>pct(share(r.as,A.sales))},{num:true,v:r=>pct(share(r.bs,B.sales))},
     {num:true,v:r=>ptsTxt(ds(r)),cls:r=>chgCls(Math.round(ds(r)*10))}
   ],byKey('__size','Size',ctx));
   // store-wise: each size as Period A % -> Period B % of that store's units
   const cols=list.map(x=>x.name).sort();
-  $('cmpStoreSizeHead').innerHTML='<tr><th>Store</th><th class="num">A Qty</th><th class="num">B Qty</th>'+cols.map(c=>`<th class="num">${esc(c)} %</th>`).join('')+'</tr>';
+  $('cmpStoreSizeHead').innerHTML='<tr><th>Store</th><th class="num">A Qty</th><th class="num">B Qty</th><th class="num">Qty Difference</th>'+cols.map(c=>`<th class="num">${esc(c)} %</th>`).join('')+'</tr>';
   const storeList=[...stores.values()].sort((x,y)=>(y.bq-x.bq)||(y.aq-x.aq));
   const cell=(r,c)=>{const a=share((r.a&&r.a.get(c))||0,r.aq),b=share((r.b&&r.b.get(c))||0,r.bq),d=b-a;
     return `${pct(a)} → ${pct(b)} <span class="${chgCls(Math.round(d*10))}">(${d>0?'+':''}${d.toFixed(1)})</span>`};
-  tableRows('cmpStoreSizeRows',storeList,[{k:'name'},{k:'aq',num:true},{k:'bq',num:true}].concat(cols.map(c=>({num:true,v:r=>cell(r,c),html:x=>x}))),byKey('__store','Store',ctx));
+  tableRows('cmpStoreSizeRows',storeList,[{k:'name'},{k:'aq',num:true},{k:'bq',num:true},diffCol('aq','bq')].concat(cols.map(c=>({num:true,v:r=>cell(r,c),html:x=>x}))),byKey('__store','Store',ctx));
 }
 // load any month the two periods need (not loaded yet) before comparing
 async function runFullComparison(){
@@ -2436,11 +2441,14 @@ function pairGroups(A,B,key){
   return [...m.values()].sort((x,y)=>(y.bs-x.bs)||(y.as-x.as));
 }
 const chgCls=v=>v>0?'cf-high':v<0?'cf-low':'';
+// v9.4: signed difference (Month B − Month A), e.g. "+1,250" / "-7,759"
+const sdiff=v=>{v=Math.round(v||0);return (v>0?'+':'')+fmt(v)};
+const diffCol=(a,b)=>({num:true,v:r=>sdiff(r[b]-r[a]),cls:r=>chgCls(r[b]-r[a])});
 const D_COLS=[
-  {num:true,v:r=>fmt(r.aq)},{num:true,v:r=>fmt(r.bq)},{num:true,v:r=>pct(pctChange(r.aq,r.bq)),cls:r=>chgCls(pctChange(r.aq,r.bq))},
-  {num:true,v:r=>money(r.as)},{num:true,v:r=>money(r.bs)},{num:true,v:r=>pct(pctChange(r.as,r.bs)),cls:r=>chgCls(pctChange(r.as,r.bs))}];
+  {num:true,v:r=>fmt(r.aq)},{num:true,v:r=>fmt(r.bq)},diffCol('aq','bq'),{num:true,v:r=>pct(pctChange(r.aq,r.bq)),cls:r=>chgCls(pctChange(r.aq,r.bq))},
+  {num:true,v:r=>money(r.as)},{num:true,v:r=>money(r.bs)},diffCol('as','bs'),{num:true,v:r=>pct(pctChange(r.as,r.bs)),cls:r=>chgCls(pctChange(r.as,r.bs))}];
 function mTable(id,firstHeads,firstCols,list,drill){
-  $(id+'Head').innerHTML=`<tr>${firstHeads.map(h=>`<th>${esc(h)}</th>`).join('')}<th class="num">${M.la} Qty</th><th class="num">${M.lb} Qty</th><th class="num">Qty Change %</th><th class="num">${M.la} Sales</th><th class="num">${M.lb} Sales</th><th class="num">Sales Change %</th></tr>`;
+  $(id+'Head').innerHTML=`<tr>${firstHeads.map(h=>`<th>${esc(h)}</th>`).join('')}<th class="num">${M.la} Qty</th><th class="num">${M.lb} Qty</th><th class="num">Qty Difference</th><th class="num">Qty Change %</th><th class="num">${M.la} Sales</th><th class="num">${M.lb} Sales</th><th class="num">Sales Difference</th><th class="num">Sales Change %</th></tr>`;
   tableRows(id+'Rows',list,[...firstCols,...D_COLS],drill);
 }
 function mKpi(i,a,b,change){
@@ -2455,15 +2463,28 @@ function cmpGrad(c,solid,soft,horizontal){
   const g=horizontal?ch.ctx.createLinearGradient(a.left,0,a.right,0):ch.ctx.createLinearGradient(0,a.bottom,0,a.top);
   g.addColorStop(0,soft);g.addColorStop(1,solid);return g;
 }
-const cmpChg=(c)=>{const s=c.chart.canvas._cmp;if(!s)return null;const a=s.A[c.dataIndex],b=s.B[c.dataIndex];return a?(b-a)/a*100:null};
+/* v9.3 AMOUNT / % SWITCH: in % mode every chart shows each value as a share of that month's total,
+   and the change tag on bars is the difference in percentage points (pts). Tables and KPIs stay as they are. */
+const CMP_MODE_KEY='viewx-mm-cmp-mode';
+let cmpPct=(()=>{try{return localStorage.getItem(CMP_MODE_KEY)==='pct'}catch(e){return false}})();
+function setCmpMode(pctMode){
+  cmpPct=!!pctMode;try{localStorage.setItem(CMP_MODE_KEY,cmpPct?'pct':'amt')}catch(e){}
+  document.querySelectorAll('#cmpModeTg button').forEach(b=>b.classList.toggle('active',(b.dataset.m==='pct')===cmpPct));
+}
+// headings written as <span data-amt="…" data-pct="…"> follow the switch
+function syncCmpModeText(){document.querySelectorAll('#mSections [data-amt]').forEach(el=>{el.textContent=cmpPct?el.dataset.pct:el.dataset.amt})}
+const modeText=(amt,pctText)=>`<span data-amt="${amt}" data-pct="${pctText}">${cmpPct?pctText:amt}</span>`;
+const cmpChg=(c)=>{const s=c.chart.canvas._cmp;if(!s)return null;const a=s.A[c.dataIndex],b=s.B[c.dataIndex];if(s.pct)return (a||b)?b-a:null;return a?(b-a)/a*100:null};
 function mBars(id,list,n,horizontal,key='s'){
   const canvas=$(id);if(!canvas||typeof Chart==='undefined')return;
-  const top=list.slice(0,n),labels=top.map(x=>x.name),A=top.map(x=>x['a'+key]),B=top.map(x=>x['b'+key]);
-  const val=v=>key==='q'?fmt(v):money(v),thick=horizontal?12:26;
+  const top=list.slice(0,n),labels=top.map(x=>x.name),ta=list.reduce((t,x)=>t+x['a'+key],0),tb=list.reduce((t,x)=>t+x['b'+key],0);
+  const A=top.map(x=>cmpPct?share(x['a'+key],ta):x['a'+key]),B=top.map(x=>cmpPct?share(x['b'+key],tb):x['b'+key]);
+  const val=v=>{const s=canvas._cmp;return s&&s.pct?pct(v):(s&&s.key==='q'?fmt(v):money(v))},thick=horizontal?12:26;
+  const chgText=d=>{const s=canvas._cmp;return s&&s.pct?`${Math.abs(d).toFixed(1)} pts`:`${Math.abs(d).toFixed(1)}%`};
   const ds=[
     {label:M.laFull||M.la,data:A,backgroundColor:c=>cmpGrad(c,CA,'rgba(50,103,233,.45)',horizontal),hoverBackgroundColor:CA,borderRadius:7,borderSkipped:false,maxBarThickness:thick,datalabels:{display:false}},
     {label:M.lbFull||M.lb,data:B,backgroundColor:c=>cmpGrad(c,CB,'rgba(24,168,139,.45)',horizontal),hoverBackgroundColor:CB,borderRadius:7,borderSkipped:false,maxBarThickness:thick}];
-  canvas._cmp={A,B}; // both months' values, for the change tags and tooltip
+  canvas._cmp={A,B,pct:cmpPct,key}; // both months' values, for the change tags and tooltip
   if(horizontal){const h=Math.max(260,top.length*30+60),box=canvas.parentElement;box.style.height=h+'px';box.style.setProperty('--h',h+'px')} // room for every bar pair
   const ex=charts[id];
   if(ex){ex.data.labels=labels;ex.data.datasets=ds;ex.update('none');return}
@@ -2477,24 +2498,25 @@ function mBars(id,list,n,horizontal,key='s'){
       legend:{position:'top',align:'end',labels:{usePointStyle:true,pointStyle:'rectRounded',boxWidth:10,boxHeight:10,padding:14,color:'#52637a',font:{size:11,weight:'600'}}},
       tooltip:{backgroundColor:'rgba(15,23,42,.94)',padding:11,cornerRadius:10,usePointStyle:true,boxPadding:5,titleFont:{size:12,weight:'700'},bodyFont:{size:12},footerFont:{size:12,weight:'700'},
         callbacks:{label:c=>` ${c.dataset.label}: ${val(c.parsed[horizontal?'x':'y'])}`,
-          footer:items=>{const d=items.length&&cmpChg(items[0]);return d===null||d===false||d===undefined?'':`Change: ${d>0?'+':''}${d.toFixed(1)}%`}}},
+          footer:items=>{const d=items.length&&cmpChg(items[0]);return d===null||d===false||d===undefined?'':`Change: ${d>0?'+':d<0?'−':''}${chgText(d)}`}}},
       datalabels:{display:c=>cmpChg(c)!==null,anchor:'end',align:horizontal?'right':'top',offset:3,clamp:true,
-        formatter:(v,c)=>{const d=cmpChg(c);return `${d>=0?'▲':'▼'} ${Math.abs(d).toFixed(1)}%`},
+        formatter:(v,c)=>{const d=cmpChg(c);return `${d>=0?'▲':'▼'} ${chgText(d)}`},
         color:c=>cmpChg(c)>=0?'#0f7a64':'#c2410c',
         backgroundColor:c=>cmpChg(c)>=0?'rgba(24,168,139,.13)':'rgba(240,120,120,.16)',
         borderRadius:999,padding:{top:2,bottom:2,left:6,right:6},font:{size:9.5,weight:'700'}}
     },
     scales:{
       [horizontal?'y':'x']:{grid:{display:false},border:{display:false},ticks:{color:'#52637a',font:{size:10,weight:'500'},autoSkip:!horizontal,maxRotation:horizontal?0:35,callback:function(v){return cut(this.getLabelForValue(v))}}},
-      [horizontal?'x':'y']:{beginAtZero:true,grace:'10%',border:{display:false},grid:{color:'rgba(148,163,184,.18)',drawTicks:false},ticks:{color:'#8a97a9',font:{size:10},padding:6,callback:v=>cmpShort(v)}}
+      [horizontal?'x':'y']:{beginAtZero:true,grace:'10%',border:{display:false},grid:{color:'rgba(148,163,184,.18)',drawTicks:false},ticks:{color:'#8a97a9',font:{size:10},padding:6,callback:v=>canvas._cmp&&canvas._cmp.pct?`${+(+v).toFixed(1)}%`:cmpShort(v)}}
     }}});
 }
 // two doughnuts side by side (one per month), same slice order and colours in both
-function mDonuts(id,list,n,key='s',asShare=false){
-  const top=list.slice(0,n),names=top.map(x=>x.name);
+function mDonuts(id,list,n,key='s'){
+  const top=list.slice(0,n),names=top.map(x=>x.name),asShare=cmpPct; // v9.3: follows the Amount / % switch
   [['A','a',M.laFull],['B','b',M.lbFull]].forEach(([P,p,label])=>{
     const k=p+key,total=list.reduce((t,x)=>t+x[k],0);
     $(id+P+'L').textContent=label;
+    if(charts[id+P]&&!!charts[id+P].data.datasets[0]?.suffix!==asShare){charts[id+P].destroy();delete charts[id+P]} // rebuild when the mode changes
     setChart(id+P,'doughnut',names,[asShare?{label:label+' %',data:top.map(x=>share(x[k],total)),suffix:'%'}:{label,data:top.map(x=>x[k])}]);
   });
 }
@@ -2507,7 +2529,7 @@ const MODAL={
       +mChartTable('mtCat','Category Comparison','',mChartBox('mc_cat',260))
       +`<div class="panel mgap">${mHead('Area Manager Contribution','')}${mDual('mc_am')}<div style="height:14px"></div>${mTableEl('mtAM')}</div>`
       +mChartTable('mtStore','Store Contribution','Top 15',mChartBox('mc_store',260))
-      +mPanel('Trend','By day of month',mChartBox('mc_trend',300)),
+      +mPanel('Trend',modeText('By day of month','Each day as % of its month'),mChartBox('mc_trend',300)),
     fill(A,B,aa,bb){
       const q=currentMetric!=='sales',key=q?'q':'s';
       mKpi(0,money(aa.sales),money(bb.sales),pctChange(aa.sales,bb.sales));
@@ -2522,7 +2544,8 @@ const MODAL={
       const da=new Array(32).fill(0),db=new Array(32).fill(0);
       A.forEach(r=>da[r.__d]+=q?r.__qty:r.__sales);B.forEach(r=>db[r.__d]+=q?r.__qty:r.__sales);
       const days=[];for(let d=1;d<=31;d++)if(da[d]||db[d])days.push(d);
-      setChart('mc_trend','line',days.map(String),[{label:M.la,data:days.map(d=>da[d]),borderColor:CA,backgroundColor:'rgba(50,103,233,.10)'},{label:M.lb,data:days.map(d=>db[d]),borderColor:CB,backgroundColor:'rgba(24,168,139,.10)'}]);
+      const sa=da.reduce((t,v)=>t+v,0),sb=db.reduce((t,v)=>t+v,0),tv=(v,t)=>cmpPct?share(v,t):v,sfx=cmpPct?{suffix:'%'}:{};
+      setChart('mc_trend','line',days.map(String),[{label:M.la,data:days.map(d=>tv(da[d],sa)),borderColor:CA,backgroundColor:'rgba(50,103,233,.10)',...sfx},{label:M.lb,data:days.map(d=>tv(db[d],sb)),borderColor:CB,backgroundColor:'rgba(24,168,139,.10)',...sfx}]);
     }
   },
   products:{
@@ -2542,7 +2565,7 @@ const MODAL={
     }
   },
   menumix:{
-    html:()=>`<div class="panel mgap">${mHead('Category sales mix','Amount')}${mDual('mc_mixcat')}</div>`
+    html:()=>`<div class="panel mgap">${mHead('Category sales mix',modeText('Amount','% of month total'))}${mDual('mc_mixcat')}</div>`
       +mPanel('Sub-category sales mix','Top 20',mChartBox('mc_sub',420))
       +mTablePanel('mtMix','Menu mix detail','Product contribution'),
     fill(A,B){
@@ -2554,8 +2577,8 @@ const MODAL={
   },
   sizes:{
     html:()=>mKpis(['Active Sizes','Top size by units','Top size quantity %','Total units'])
-      +`<div class="panel mgap">${mHead('Size mix % by quantity','Share of units')}${mDual('mc_szq')}</div>`
-      +`<div class="panel mgap">${mHead('Size mix % by sales','Share of sales')}${mDual('mc_szs')}</div>`
+      +`<div class="panel mgap">${mHead(modeText('Size mix by quantity','Size mix % by quantity'),modeText('Units','Share of units'))}${mDual('mc_szq')}</div>`
+      +`<div class="panel mgap">${mHead(modeText('Size mix by sales','Size mix % by sales'),modeText('Sales amount','Share of sales'))}${mDual('mc_szs')}</div>`
       +mTablePanel('mtSize','Size contribution table','Filtered by Size Group')
       +mTablePanel('mtStoreSize','Store-wise Size Breakdown',"% of each store's total qty"),
     fill(A,B,aa,bb){
@@ -2568,15 +2591,15 @@ const MODAL={
       mKpi(3,fmt(aa.qty),fmt(bb.qty),pctChange(aa.qty,bb.qty));
       mDonuts('mc_szq',sizes,12,'q',true);mDonuts('mc_szs',sizes,12,'s',true);
       const la=M.la,lb=M.lb,nh=t=>`<th class="num">${esc(t)}</th>`;
-      $('mtSizeHead').innerHTML=`<tr><th>Size</th>${[`${la} Qty`,`${la} Qty %`,`${lb} Qty`,`${lb} Qty %`,`${la} Sales`,`${la} Sales %`,`${lb} Sales`,`${lb} Sales %`].map(nh).join('')}</tr>`;
-      tableRows('mtSizeRows',sizes,[{k:'name'},{num:true,v:r=>fmt(r.aq)},{num:true,v:r=>pct(share(r.aq,aa.qty))},{num:true,v:r=>fmt(r.bq)},{num:true,v:r=>pct(share(r.bq,bb.qty))},{num:true,v:r=>money(r.as)},{num:true,v:r=>pct(share(r.as,aa.sales))},{num:true,v:r=>money(r.bs)},{num:true,v:r=>pct(share(r.bs,bb.sales))}],byKey('__size','Size',modalCtx));
+      $('mtSizeHead').innerHTML=`<tr><th>Size</th>${[`${la} Qty`,`${la} Qty %`,`${lb} Qty`,`${lb} Qty %`,'Qty Difference',`${la} Sales`,`${la} Sales %`,`${lb} Sales`,`${lb} Sales %`,'Sales Difference'].map(nh).join('')}</tr>`;
+      tableRows('mtSizeRows',sizes,[{k:'name'},{num:true,v:r=>fmt(r.aq)},{num:true,v:r=>pct(share(r.aq,aa.qty))},{num:true,v:r=>fmt(r.bq)},{num:true,v:r=>pct(share(r.bq,bb.qty))},diffCol('aq','bq'),{num:true,v:r=>money(r.as)},{num:true,v:r=>pct(share(r.as,aa.sales))},{num:true,v:r=>money(r.bs)},{num:true,v:r=>pct(share(r.bs,bb.sales))},diffCol('as','bs')],byKey('__size','Size',modalCtx));
       // store-wise breakdown, both months
       const sm=new Map(),rec=n=>{let x=sm.get(n);if(!x)sm.set(n,x={name:n,aq:0,bq:0,bs:0,sa:new Map(),sb:new Map()});return x};
       A.forEach(r=>{const x=rec(r.__store);x.aq+=r.__qty;x.sa.set(r.__size,(x.sa.get(r.__size)||0)+r.__qty)});
       B.forEach(r=>{const x=rec(r.__store);x.bq+=r.__qty;x.bs+=r.__sales;x.sb.set(r.__size,(x.sb.get(r.__size)||0)+r.__qty)});
-      const names=sizes.map(x=>x.name).sort(),cols=[{k:'name'},{num:true,v:r=>fmt(r.aq)},{num:true,v:r=>fmt(r.bq)}];
+      const names=sizes.map(x=>x.name).sort(),cols=[{k:'name'},{num:true,v:r=>fmt(r.aq)},{num:true,v:r=>fmt(r.bq)},diffCol('aq','bq')];
       names.forEach(s=>{cols.push({num:true,v:r=>pct(share(r.sa.get(s)||0,r.aq))});cols.push({num:true,v:r=>pct(share(r.sb.get(s)||0,r.bq))})});
-      $('mtStoreSizeHead').innerHTML=`<tr><th>Store</th>${nh(`${la} Total Qty`)}${nh(`${lb} Total Qty`)}${names.map(s=>nh(`${s} % ${la}`)+nh(`${s} % ${lb}`)).join('')}</tr>`;
+      $('mtStoreSizeHead').innerHTML=`<tr><th>Store</th>${nh(`${la} Total Qty`)}${nh(`${lb} Total Qty`)}${nh('Qty Difference')}${names.map(s=>nh(`${s} % ${la}`)+nh(`${s} % ${lb}`)).join('')}</tr>`;
       tableRows('mtStoreSizeRows',[...sm.values()].sort((x,y)=>(y.bs-x.bs)||(y.aq-x.aq)),cols,byKey('__store','Store',modalCtx));
     }
   }
@@ -2610,8 +2633,14 @@ function renderMonthCompare(){
   for(let i=0;i<rawRows.length;i++){const r=rawRows[i];if(!r.__y||!pred(r))continue;if(dateOK(r,fa))A.push(r);if(dateOK(r,fb))B.push(r)}
   M.la=ymLabel(a,true);M.lb=ymLabel(b,true);M.laFull=ymLabel(a);M.lbFull=ymLabel(b);M.A=A;M.B=B;
   MODAL[modalView].fill(A,B,aggregate(A),aggregate(B));
+  syncCmpModeText();
   fitChartTables();
 }
+setCmpMode(cmpPct);
+document.querySelectorAll('#cmpModeTg button').forEach(b=>b.addEventListener('click',()=>{
+  const p=b.dataset.m==='pct';if(p===cmpPct)return;setCmpMode(p);
+  if(!$('cmpModal').classList.contains('hidden'))renderMonthCompare();
+}));
 $('topCmp').addEventListener('click',openMonthCompare);
 $('cmpClose').addEventListener('click',closeMonthCompare);
 document.addEventListener('keydown',e=>{if(e.key==='Escape'&&!$('cmpModal').classList.contains('hidden')&&$('pwModal').classList.contains('hidden')&&$('drillModal').classList.contains('hidden'))closeMonthCompare()});
